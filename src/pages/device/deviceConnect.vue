@@ -57,28 +57,23 @@ onLoad(async () => {
 </script>
 
 <style scoped lang="scss">
-.page-scroll {
-  background: #eef2f7;
-}
-
-.page-shell {
-  padding: 16px 16px 28px;
-}
-
 .summary-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 12px;
+  gap: 16rpx;
 }
 
 .summary-card,
 .section {
-  border-radius: 20px;
-  background: #fff;
+  border: 1rpx solid var(--hairline);
+  border-radius: var(--r-lg);
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
 }
 
 .summary-card {
-  padding: 16px 14px;
+  padding: 24rpx 22rpx;
+  border-radius: var(--r-md);
 }
 
 .summary-label,
@@ -86,56 +81,56 @@ onLoad(async () => {
 .step-description {
   font-size: 12px;
   line-height: 1.6;
-  color: #7a8499;
+  color: var(--ink-400);
 }
 
 .summary-value,
 .section-title,
 .step-title {
   font-size: 15px;
-  font-weight: 700;
-  color: #1b2437;
+  font-weight: 800;
+  color: var(--ink-900);
 }
 
 .summary-value {
-  margin-top: 8px;
+  margin-top: 10rpx;
 }
 
 .section {
-  margin: 16px 0;
-  padding: 18px;
+  padding: 28rpx;
 }
 
 .step-list {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  margin-top: 14px;
+  gap: 16rpx;
+  margin-top: 20rpx;
 }
 
 .step-item {
   display: flex;
-  gap: 12px;
-  padding: 14px;
-  border-radius: 16px;
-  background: #f5f7fb;
+  gap: 16rpx;
+  padding: 24rpx;
+  border: 1rpx solid rgba(49, 95, 203, 0.08);
+  border-radius: var(--r-md);
+  background: linear-gradient(180deg, #fbfcfe 0%, #f4f7fb 100%);
 }
 
 .step-flag {
-  width: 12px;
+  width: 12rpx;
   border-radius: 999px;
 }
 
 .step-flag.done {
-  background: #18794e;
+  background: var(--status-online-fg);
 }
 
 .step-flag.active {
-  background: #1f6fff;
+  background: var(--brand-500);
 }
 
 .step-flag.pending {
-  background: #d1d5db;
+  background: var(--ink-300);
 }
 
 .step-body {

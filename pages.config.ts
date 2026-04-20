@@ -4,9 +4,9 @@ export default defineUniPages({
   globalStyle: {
     navigationStyle: 'default',
     navigationBarTitleText: '设备管理',
-    navigationBarBackgroundColor: '#f5f7fb',
+    navigationBarBackgroundColor: '#f8fafc',
     navigationBarTextStyle: 'black',
-    backgroundColor: '#eef2f7',
+    backgroundColor: '#f5f7fb',
   },
   easycom: {
     autoscan: true,
@@ -17,9 +17,9 @@ export default defineUniPages({
     },
   },
   tabBar: {
-    color: '#7a8499',
-    selectedColor: '#1f6fff',
-    backgroundColor: '#ffffff',
+    color: '#8d98aa',
+    selectedColor: '#315fcb',
+    backgroundColor: '#fcfdff',
     borderStyle: 'black',
     height: '52px',
     fontSize: '11px',

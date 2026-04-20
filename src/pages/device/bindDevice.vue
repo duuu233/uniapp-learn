@@ -60,74 +60,68 @@ onLoad(async () => {
 </script>
 
 <style scoped lang="scss">
-.page-scroll {
-  background: #eef2f7;
-}
-
-.page-shell {
-  padding: 16px 16px 28px;
-}
-
 .section {
-  margin-bottom: 16px;
-  padding: 18px;
-  border-radius: 20px;
-  background: #fff;
+  padding: 28rpx;
+  border: 1rpx solid var(--hairline);
+  border-radius: var(--r-lg);
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
 }
 
 .section-title,
 .step-title,
 .form-value {
   font-size: 15px;
-  font-weight: 700;
-  color: #1b2437;
+  font-weight: 800;
+  color: var(--ink-900);
 }
 
 .step-list,
 .form-list {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  margin-top: 14px;
+  gap: 16rpx;
+  margin-top: 20rpx;
 }
 
 .step-item,
 .form-card {
-  padding: 14px;
-  border-radius: 16px;
-  background: #f5f7fb;
+  padding: 24rpx;
+  border: 1rpx solid rgba(49, 95, 203, 0.08);
+  border-radius: var(--r-md);
+  background: linear-gradient(180deg, #fbfcfe 0%, #f4f7fb 100%);
 }
 
 .step-item {
   display: flex;
-  gap: 12px;
+  gap: 16rpx;
 }
 
 .step-dot {
-  width: 10px;
-  height: 10px;
-  margin-top: 6px;
+  width: 12rpx;
+  height: 12rpx;
+  margin-top: 10rpx;
   border-radius: 50%;
 }
 
 .step-dot.done {
-  background: #18794e;
+  background: var(--status-online-fg);
 }
 
 .step-dot.active {
-  background: #1f6fff;
+  background: var(--brand-500);
 }
 
 .step-dot.pending {
-  background: #d1d5db;
+  background: var(--ink-300);
 }
 
 .step-description,
 .form-label,
 .form-description {
-  margin-top: 6px;
+  margin-top: 10rpx;
   font-size: 12px;
   line-height: 1.6;
-  color: #7a8499;
+  color: var(--ink-400);
 }
 </style>

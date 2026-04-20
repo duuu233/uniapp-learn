@@ -44,47 +44,41 @@ onLoad(async () => {
 </script>
 
 <style scoped lang="scss">
-.page-scroll {
-  background: #eef2f7;
-}
-
-.page-shell {
-  padding: 16px 16px 28px;
-}
-
 .doc-list {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  margin-bottom: 16px;
+  gap: 16rpx;
 }
 
 .doc-card {
-  padding: 16px;
-  border-radius: 20px;
-  background: #fff;
+  padding: 24rpx;
+  border: 1rpx solid var(--hairline);
+  border-radius: var(--r-lg);
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
 }
 
 .doc-category {
   display: inline-flex;
-  padding: 4px 10px;
+  padding: 6rpx 14rpx;
   border-radius: 999px;
-  background: #eef4ff;
+  background: var(--status-info-bg);
   font-size: 11px;
-  color: #1f6fff;
+  color: var(--status-info-fg);
+  font-weight: 700;
 }
 
 .doc-title {
-  margin-top: 12px;
+  margin-top: 16rpx;
   font-size: 16px;
-  font-weight: 700;
-  color: #1b2437;
+  font-weight: 800;
+  color: var(--ink-900);
 }
 
 .doc-summary {
-  margin-top: 8px;
+  margin-top: 12rpx;
   font-size: 12px;
   line-height: 1.7;
-  color: #7a8499;
+  color: var(--ink-400);
 }
 </style>

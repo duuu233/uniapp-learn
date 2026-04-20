@@ -53,72 +53,65 @@ onLoad(async () => {
 </script>
 
 <style scoped lang="scss">
-.page-scroll {
-  background: #eef2f7;
-}
-
-.page-shell {
-  padding: 16px 16px 28px;
-}
-
 .intro-card,
 .permission-card {
-  border-radius: 20px;
-  background: #fff;
+  border: 1rpx solid var(--hairline);
+  border-radius: var(--r-lg);
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
 }
 
 .intro-card {
-  padding: 18px;
+  padding: 28rpx;
   font-size: 13px;
   line-height: 1.8;
-  color: #576074;
+  color: var(--ink-500);
 }
 
 .permission-list {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  margin: 16px 0;
+  gap: 16rpx;
 }
 
 .permission-card {
-  padding: 16px;
+  padding: 24rpx;
 }
 
 .permission-top {
   display: flex;
   justify-content: space-between;
-  gap: 12px;
+  gap: 16rpx;
 }
 
 .permission-title {
   font-size: 15px;
-  font-weight: 700;
-  color: #1b2437;
+  font-weight: 800;
+  color: var(--ink-900);
 }
 
 .permission-platform,
 .permission-description {
-  margin-top: 6px;
+  margin-top: 10rpx;
   font-size: 12px;
   line-height: 1.6;
-  color: #7a8499;
+  color: var(--ink-400);
 }
 
 .permission-flag {
-  padding: 4px 10px;
+  padding: 6rpx 14rpx;
   border-radius: 999px;
   font-size: 11px;
   font-weight: 700;
 }
 
 .permission-flag.required {
-  background: #fee2e2;
-  color: #dc2626;
+  background: var(--status-offline-bg);
+  color: var(--status-offline-fg);
 }
 
 .permission-flag.optional {
-  background: #eef4ff;
-  color: #1f6fff;
+  background: var(--status-info-bg);
+  color: var(--status-info-fg);
 }
 </style>

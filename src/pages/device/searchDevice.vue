@@ -64,66 +64,60 @@ onLoad(async () => {
 </script>
 
 <style scoped lang="scss">
-.page-scroll {
-  background: #eef2f7;
-}
-
-.page-shell {
-  padding: 16px 16px 28px;
-}
-
 .section {
-  margin-bottom: 16px;
-  padding: 18px;
-  border-radius: 20px;
-  background: #fff;
+  padding: 28rpx;
+  border: 1rpx solid var(--hairline);
+  border-radius: var(--r-lg);
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
 }
 
 .section-title,
 .filter-value,
 .device-name {
   font-size: 15px;
-  font-weight: 700;
-  color: #1b2437;
+  font-weight: 800;
+  color: var(--ink-900);
 }
 
 .filter-list,
 .device-list {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  margin-top: 14px;
+  gap: 16rpx;
+  margin-top: 20rpx;
 }
 
 .filter-card,
 .device-card {
-  padding: 14px;
-  border-radius: 16px;
-  background: #f5f7fb;
+  padding: 24rpx;
+  border: 1rpx solid rgba(49, 95, 203, 0.08);
+  border-radius: var(--r-md);
+  background: linear-gradient(180deg, #fbfcfe 0%, #f4f7fb 100%);
 }
 
 .filter-label,
 .filter-description,
 .device-sn,
 .device-meta {
-  margin-top: 6px;
+  margin-top: 10rpx;
   font-size: 12px;
   line-height: 1.6;
-  color: #7a8499;
+  color: var(--ink-400);
 }
 
 .device-top {
   display: flex;
   justify-content: space-between;
-  gap: 12px;
+  gap: 16rpx;
 }
 
 .device-status {
-  padding: 4px 10px;
+  padding: 6rpx 14rpx;
   border-radius: 999px;
-  background: #eef4ff;
+  background: var(--status-info-bg);
   font-size: 11px;
   font-weight: 700;
-  color: #1f6fff;
+  color: var(--status-info-fg);
 }
 </style>

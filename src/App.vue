@@ -31,15 +31,33 @@ export default {
 :root,
 page {
   font-size: 14px;
-  color: #333333;
+  color: var(--ink-700);
   font-family:
-    Helvetica Neue,
-    Helvetica,
+    'SF Pro Text',
+    'PingFang SC',
+    'Hiragino Sans GB',
+    'Microsoft YaHei',
+    'Noto Sans CJK SC',
     sans-serif;
+  background: var(--app-bg);
+  -webkit-font-smoothing: antialiased;
+}
+
+page,
+view,
+text,
+button,
+input,
+textarea,
+scroll-view,
+swiper,
+image {
+  box-sizing: border-box;
 }
 
 uni-page-body {
   height: 100%;
+  background: var(--app-bg);
 
   & > uni-view {
     height: 100%;
@@ -48,7 +66,7 @@ uni-page-body {
 
 .shadow-warp {
   position: relative;
-  box-shadow: 0 0 5px rgba(168, 92, 92, 0.1);
+  box-shadow: var(--shadow-sm);
 }
 
 /* stylelint-disable selector-type-no-unknown */

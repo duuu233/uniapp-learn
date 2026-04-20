@@ -64,30 +64,24 @@ onLoad(async () => {
 </script>
 
 <style scoped lang="scss">
-.page-scroll {
-  background: #eef2f7;
-}
-
-.page-shell {
-  padding: 16px 16px 28px;
-}
-
 .summary-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 12px;
+  gap: 16rpx;
 }
 
 .summary-card,
 .map-card,
 .timeline-item {
-  border-radius: 20px;
-  background: #fff;
+  border: 1rpx solid var(--hairline);
+  border-radius: var(--r-lg);
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
 }
 
 .summary-card,
 .map-card {
-  padding: 16px;
+  padding: 24rpx;
 }
 
 .summary-label,
@@ -95,34 +89,30 @@ onLoad(async () => {
 .timeline-description {
   font-size: 12px;
   line-height: 1.6;
-  color: #7a8499;
+  color: var(--ink-400);
 }
 
 .summary-value,
 .map-title,
 .timeline-title {
   font-size: 15px;
-  font-weight: 700;
-  color: #1b2437;
+  font-weight: 800;
+  color: var(--ink-900);
 }
 
 .summary-value {
-  margin-top: 8px;
-}
-
-.map-card {
-  margin: 16px 0;
+  margin-top: 10rpx;
 }
 
 .map-placeholder {
   position: relative;
   height: 180px;
-  margin-top: 14px;
-  border-radius: 18px;
+  margin-top: 20rpx;
+  border-radius: var(--r-md);
   background:
-    radial-gradient(circle at 20% 30%, rgba(31, 111, 255, 0.12), transparent 22%),
-    radial-gradient(circle at 70% 60%, rgba(24, 121, 78, 0.14), transparent 20%),
-    linear-gradient(135deg, #f8fbff, #edf3fb);
+    radial-gradient(circle at 20% 30%, rgba(49, 95, 203, 0.12), transparent 22%),
+    radial-gradient(circle at 70% 60%, rgba(20, 125, 116, 0.12), transparent 20%),
+    linear-gradient(135deg, #fbfcfe, #eef3fa);
 }
 
 .map-dot {
@@ -131,25 +121,25 @@ onLoad(async () => {
   height: 16px;
   border: 4px solid #fff;
   border-radius: 50%;
-  box-shadow: 0 6px 14px rgba(31, 111, 255, 0.2);
+  box-shadow: 0 6px 14px rgba(49, 95, 203, 0.18);
 }
 
 .dot-a {
   top: 34px;
   left: 48px;
-  background: #1f6fff;
+  background: var(--brand-500);
 }
 
 .dot-b {
   top: 78px;
   left: 146px;
-  background: #14b8a6;
+  background: var(--aurora-teal);
 }
 
 .dot-c {
   top: 120px;
   left: 260px;
-  background: #f59e0b;
+  background: var(--aurora-amber);
 }
 
 .map-line {
@@ -158,28 +148,27 @@ onLoad(async () => {
   left: 60px;
   width: 208px;
   height: 2px;
-  border-top: 2px dashed #1f6fff;
+  border-top: 2px dashed rgba(49, 95, 203, 0.72);
   transform: rotate(18deg);
 }
 
 .timeline-list {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  margin-bottom: 16px;
+  gap: 16rpx;
 }
 
 .timeline-item {
   display: flex;
-  gap: 12px;
-  padding: 14px 16px;
+  gap: 16rpx;
+  padding: 22rpx 24rpx;
 }
 
 .timeline-time {
   width: 54px;
   font-size: 12px;
   font-weight: 700;
-  color: #1f6fff;
+  color: var(--brand-600);
 }
 
 .timeline-content {

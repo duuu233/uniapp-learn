@@ -14,15 +14,17 @@
 
 <template>
   <PageLayout :navbarShow="false">
-    <scroll-view scroll-y class="page-scroll">
+    <scroll-view scroll-y class="page-scroll aurora-bg">
       <view v-if="pageData" class="page-shell">
         <view class="hero">
+          <view class="hero-glow" />
+          <view class="hero-kicker">Device · Hub</view>
           <view class="hero-title">设备中心</view>
           <view class="hero-subtitle">设备管理、绑定、搜索、连接和状态时间线统一收口在这里。</view>
         </view>
 
         <view class="summary-grid">
-          <view v-for="item in pageData.summary" :key="item.label" class="summary-card">
+          <view v-for="(item, i) in pageData.summary" :key="item.label" class="summary-card" :style="{ '--i': i }">
             <view class="summary-label">{{ item.label }}</view>
             <view class="summary-value">{{ item.value }}</view>
             <view class="summary-hint">{{ item.hint }}</view>
@@ -30,41 +32,78 @@
         </view>
 
         <view class="section">
-          <view class="section-title">快捷入口</view>
+          <view class="section-head">
+            <view class="app-section-kicker">Shortcuts</view>
+            <view class="section-title">快捷入口</view>
+          </view>
           <view class="shortcut-list">
-            <view v-for="item in pageData.shortcuts" :key="item.title" class="shortcut-card" @click="openRoute(item.url)">
-              <view>
+            <view
+              v-for="item in pageData.shortcuts"
+              :key="item.title"
+              class="shortcut-card"
+              hover-class="shortcut-card--hover"
+              @click="openRoute(item.url)"
+            >
+              <view class="shortcut-body">
                 <view class="shortcut-title">{{ item.title }}</view>
                 <view class="shortcut-subtitle">{{ item.subtitle }}</view>
               </view>
-              <view class="shortcut-badge">{{ item.badge }}</view>
+              <view class="app-pill is-info">{{ item.badge }}</view>
             </view>
           </view>
         </view>
 
         <view class="section">
-          <view class="section-title">设备列表</view>
+          <view class="section-head">
+            <view class="app-section-kicker">Devices</view>
+            <view class="section-title">设备列表</view>
+          </view>
           <view class="device-list">
-            <view v-for="item in pageData.devices" :key="item.id" class="device-card">
+            <view v-for="item in pageData.devices" :key="item.id" class="device-card" hover-class="device-card--hover">
               <view class="device-top">
-                <view>
+                <view class="device-id">
                   <view class="device-name">{{ item.name }}</view>
                   <view class="device-sn">{{ item.serialNumber }}</view>
                 </view>
-                <view :class="['device-status', statusClass(item.status)]">{{ item.status }}</view>
+                <view :class="['app-pill', statusClass(item.status)]">
+                  <view class="app-dot" />
+                  <text>{{ item.status }}</text>
+                </view>
               </view>
               <view class="device-meta">{{ item.location }}</view>
-              <view class="device-meta">信号 {{ item.signal }} · 电量 {{ item.battery }} · 最近 {{ item.lastSeen }}</view>
+              <view class="device-stats">
+                <view class="device-stat">
+                  <view class="device-stat-label">信号</view>
+                  <view class="device-stat-value">{{ item.signal }}</view>
+                </view>
+                <view class="device-stat-divider" />
+                <view class="device-stat">
+                  <view class="device-stat-label">电量</view>
+                  <view class="device-stat-value">{{ item.battery }}</view>
+                </view>
+                <view class="device-stat-divider" />
+                <view class="device-stat">
+                  <view class="device-stat-label">最近</view>
+                  <view class="device-stat-value">{{ item.lastSeen }}</view>
+                </view>
+              </view>
             </view>
           </view>
         </view>
 
         <view class="section">
-          <view class="section-title">最新动态</view>
+          <view class="section-head">
+            <view class="app-section-kicker">Timeline</view>
+            <view class="section-title">最新动态</view>
+          </view>
           <view class="timeline-list">
-            <view v-for="item in pageData.timeline" :key="`${item.time}-${item.title}`" class="timeline-item">
-              <view class="timeline-time">{{ item.time }}</view>
-              <view class="timeline-content">
+            <view v-for="(item, i) in pageData.timeline" :key="`${item.time}-${item.title}`" class="timeline-item">
+              <view class="timeline-rail">
+                <view class="timeline-dot" />
+                <view v-if="i < pageData.timeline.length - 1" class="timeline-line" />
+              </view>
+              <view class="timeline-main">
+                <view class="timeline-time">{{ item.time }}</view>
                 <view class="timeline-title">{{ item.title }}</view>
                 <view class="timeline-description">{{ item.description }}</view>
               </view>
@@ -91,9 +130,9 @@ const openRoute = (url: string) => {
 }
 
 const statusClass = (status: string) => {
-  if (status === '在线') return 'online'
-  if (status === '待激活') return 'pending'
-  return 'offline'
+  if (status === '在线') return 'is-online'
+  if (status === '待激活') return 'is-pending'
+  return 'is-offline'
 }
 
 onLoad(async () => {
@@ -102,142 +141,315 @@ onLoad(async () => {
 </script>
 
 <style scoped lang="scss">
-.page-scroll {
-  background: #eef2f7;
-}
-
 .page-shell {
-  padding: 18px 16px 28px;
+  gap: 28rpx;
 }
 
-.hero,
-.summary-card,
-.section {
-  border-radius: 22px;
-  background: #fff;
-}
-
+/* === Hero === */
 .hero {
-  padding: 20px;
-  background: linear-gradient(135deg, #0f766e, #14b8a6);
-  color: #fff;
+  position: relative;
+  padding: 42rpx 36rpx 38rpx;
+  border: 1rpx solid rgba(255, 255, 255, 0.08);
+  border-radius: var(--r-xl);
+  background: var(--brand-grad-deep);
+  color: var(--ink-on-brand);
+  box-shadow: var(--brand-glow);
+  overflow: hidden;
+  animation: aurora-rise 0.5s ease both;
 }
 
-.hero-title,
-.section-title {
-  font-size: 17px;
+.hero-glow {
+  position: absolute;
+  top: -120rpx;
+  right: -90rpx;
+  width: 340rpx;
+  height: 340rpx;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.14) 0%, rgba(255, 255, 255, 0) 72%);
+  pointer-events: none;
+}
+
+.hero-kicker {
+  display: inline-block;
+  padding: 6rpx 18rpx;
+  border-radius: var(--r-pill);
+  background: rgba(255, 255, 255, 0.1);
+  border: 1rpx solid rgba(255, 255, 255, 0.14);
+  font-size: 11px;
+  letter-spacing: 1.4rpx;
   font-weight: 700;
 }
 
-.hero-subtitle,
-.summary-label,
-.summary-hint,
-.shortcut-subtitle,
-.device-sn,
-.device-meta,
-.timeline-description {
-  font-size: 12px;
-  line-height: 1.6;
-  color: #7a8499;
+.hero-title {
+  margin-top: 22rpx;
+  font-size: 25px;
+  font-weight: 800;
+  letter-spacing: -0.4rpx;
 }
 
 .hero-subtitle {
-  margin-top: 8px;
-  color: rgba(255, 255, 255, 0.84);
+  margin-top: 14rpx;
+  font-size: 13px;
+  line-height: 1.7;
+  color: rgba(255, 255, 255, 0.78);
+  max-width: 92%;
 }
 
+/* === Summary === */
 .summary-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
-  margin-top: 16px;
+  gap: 20rpx;
 }
 
 .summary-card {
-  padding: 16px;
+  position: relative;
+  padding: 28rpx 26rpx;
+  border: 1rpx solid var(--hairline);
+  border-radius: var(--r-md);
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+  animation: aurora-rise 0.5s ease both;
+  animation-delay: calc(60ms * var(--i, 0));
+}
+
+.summary-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 6rpx;
+  height: 72rpx;
+  background: var(--brand-grad);
+  border-radius: 0 4rpx 4rpx 0;
+}
+
+.summary-label {
+  font-size: 12px;
+  color: var(--ink-400);
+  letter-spacing: 0.4rpx;
 }
 
 .summary-value {
-  margin-top: 8px;
-  font-size: 23px;
-  font-weight: 700;
-  color: #1b2437;
+  margin-top: 14rpx;
+  font-size: 28px;
+  font-weight: 800;
+  color: var(--ink-900);
+  letter-spacing: -0.6rpx;
+  font-feature-settings: 'tnum';
 }
 
+.summary-hint {
+  margin-top: 8rpx;
+  font-size: 12px;
+  color: var(--ink-400);
+  line-height: 1.5;
+}
+
+/* === Section === */
 .section {
-  margin-top: 16px;
-  padding: 18px;
+  padding: 32rpx 28rpx 28rpx;
+  border: 1rpx solid var(--hairline);
+  border-radius: var(--r-lg);
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
 }
 
+.section-head {
+  margin-bottom: 22rpx;
+}
+
+.section-title {
+  margin-top: 10rpx;
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--ink-900);
+  letter-spacing: -0.3rpx;
+}
+
+/* === Shortcuts === */
 .shortcut-list,
-.device-list,
+.device-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+}
+
+.shortcut-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16rpx;
+  padding: 22rpx 24rpx;
+  border-radius: var(--r-md);
+  background: linear-gradient(180deg, #fbfcfe 0%, #f4f7fb 100%);
+  border: 1rpx solid var(--hairline);
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
+}
+
+.shortcut-card--hover {
+  transform: translateY(-2rpx);
+  box-shadow: var(--shadow-sm);
+}
+
+.shortcut-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--ink-900);
+}
+
+.shortcut-subtitle {
+  margin-top: 8rpx;
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--ink-400);
+}
+
+/* === Device cards === */
+.device-card {
+  padding: 24rpx 24rpx 20rpx;
+  border-radius: var(--r-md);
+  background: var(--surface);
+  border: 1rpx solid var(--hairline);
+  box-shadow: var(--shadow-xs);
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
+}
+
+.device-card--hover {
+  transform: translateY(-2rpx);
+  box-shadow: var(--shadow-sm);
+}
+
+.device-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12rpx;
+}
+
+.device-id {
+  min-width: 0;
+}
+
+.device-name {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--ink-900);
+}
+
+.device-sn {
+  margin-top: 6rpx;
+  font-size: 11px;
+  color: var(--ink-300);
+  letter-spacing: 0.4rpx;
+  font-feature-settings: 'tnum';
+}
+
+.device-meta {
+  margin-top: 14rpx;
+  font-size: 12px;
+  color: var(--ink-500);
+  line-height: 1.6;
+}
+
+.device-stats {
+  display: flex;
+  align-items: stretch;
+  margin-top: 18rpx;
+  padding: 14rpx 0;
+  border-top: 1rpx solid var(--hairline);
+}
+
+.device-stat {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4rpx;
+}
+
+.device-stat-label {
+  font-size: 11px;
+  color: var(--ink-300);
+  letter-spacing: 0.5rpx;
+}
+
+.device-stat-value {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink-900);
+  font-feature-settings: 'tnum';
+}
+
+.device-stat-divider {
+  width: 1rpx;
+  background: var(--hairline);
+}
+
+/* === Timeline === */
 .timeline-list {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  margin-top: 14px;
 }
 
-.shortcut-card,
-.device-card,
-.timeline-item {
-  padding: 14px 16px;
-  border-radius: 18px;
-  background: #f5f7fb;
-}
-
-.shortcut-card,
-.device-top,
 .timeline-item {
   display: flex;
-  justify-content: space-between;
-  gap: 12px;
+  gap: 22rpx;
+  padding-bottom: 24rpx;
 }
 
-.shortcut-title,
-.device-name,
-.timeline-title {
-  font-size: 15px;
-  font-weight: 600;
-  color: #1b2437;
+.timeline-rail {
+  position: relative;
+  width: 14rpx;
+  flex-shrink: 0;
+  padding-top: 6rpx;
 }
 
-.shortcut-badge,
-.device-status {
-  padding: 4px 10px;
-  border-radius: 999px;
-  font-size: 11px;
-  font-weight: 700;
+.timeline-dot {
+  position: relative;
+  width: 14rpx;
+  height: 14rpx;
+  border-radius: 50%;
+  background: var(--brand-500);
+  box-shadow: 0 0 0 4rpx rgba(49, 95, 203, 0.14);
+  z-index: 1;
 }
 
-.shortcut-badge {
-  background: #d8f4ef;
-  color: #0f766e;
+.timeline-line {
+  position: absolute;
+  top: 22rpx;
+  left: 6rpx;
+  bottom: -24rpx;
+  width: 2rpx;
+  background: linear-gradient(180deg, rgba(49, 95, 203, 0.28), rgba(49, 95, 203, 0.06));
 }
 
-.device-status.online {
-  background: #dff6ea;
-  color: #18794e;
-}
-
-.device-status.pending {
-  background: #fff2d6;
-  color: #d97706;
-}
-
-.device-status.offline {
-  background: #fee2e2;
-  color: #dc2626;
+.timeline-main {
+  flex: 1;
+  min-width: 0;
+  padding-bottom: 4rpx;
 }
 
 .timeline-time {
-  width: 54px;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 700;
-  color: #0f766e;
+  color: var(--brand-600);
+  letter-spacing: 0.5rpx;
+  font-feature-settings: 'tnum';
 }
 
-.timeline-content {
-  flex: 1;
+.timeline-title {
+  margin-top: 6rpx;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ink-900);
+}
+
+.timeline-description {
+  margin-top: 6rpx;
+  font-size: 12px;
+  line-height: 1.65;
+  color: var(--ink-400);
 }
 </style>

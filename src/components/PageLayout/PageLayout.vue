@@ -186,7 +186,6 @@ const getClass = () => {
   const cls = `nav ${isMp ? 'mp' : ''} ${slot.navRight ? 'slot_navRight' : ''}`
   return cls
 }
-console.log('props:', props)
 </script>
 
 <style lang="scss" scoped>
@@ -195,42 +194,70 @@ console.log('props:', props)
   flex-direction: column;
   width: 100vw;
   height: 100vh;
+  background: var(--app-bg);
+
   .pageNav {
-    background-image: linear-gradient(45deg, #0081ff, #1cbbb4);
+    border-bottom: 1rpx solid var(--hairline);
+    background: rgba(248, 250, 252, 0.96);
+    box-shadow: 0 8rpx 28rpx rgba(15, 23, 42, 0.04);
+
     &.transparent {
-      background-image: none;
+      border-bottom-color: transparent;
+      background: transparent;
+      box-shadow: none;
     }
+
     &.fixed {
       position: fixed;
       top: 0;
       left: 0;
-      z-index: 1;
+      z-index: 10;
       width: 100%;
     }
+
     .statusBar {
       width: 100%;
       height: 0;
     }
+
     :deep(.wd-navbar) {
       background-color: transparent;
-      --wot-navbar-title-font-weight: 400;
+      --wot-navbar-color: var(--ink-900);
+      --wot-navbar-desc-font-color: var(--ink-500);
+      --wot-navbar-title-font-weight: 600;
       --wot-navbar-arrow-size: 18px;
       --wot-navbar-desc-font-size: 14px;
-      --wot-navbar-title-font-size: 16px;
+      --wot-navbar-title-font-size: 17px;
+      color: var(--ink-900);
+
+      .wd-navbar__title,
+      .wd-navbar__left,
+      .wd-navbar__right {
+        color: inherit;
+      }
+
+      .wd-navbar__text {
+        color: var(--ink-500);
+      }
+
       &.mp {
         &.slot_navRight {
           padding-right: 90px;
+
           .wd-navbar__text {
             display: none;
           }
+
           .wd-navbar__content {
             display: flex;
           }
+
           .wd-navbar__left,
           .wd-navbar__title,
           .wd-navbar__right {
             position: static;
           }
+
           .wd-navbar__title {
             max-width: none;
           }
@@ -243,54 +270,68 @@ console.log('props:', props)
     flex: 1;
     flex-direction: column;
     overflow: hidden;
-    background-color: #f1f1f1;
+    background: var(--app-bg);
+
     .content {
       display: flex;
       flex: 1;
       flex-direction: column;
       overflow: hidden;
     }
+
     .navRight {
-      padding: 15px;
-      padding-top: 10px;
       display: flex;
+      justify-content: flex-end;
+      padding: 20rpx 24rpx 24rpx;
       margin-bottom: calc(constant(safe-area-inset-bottom));
       margin-bottom: calc(env(safe-area-inset-bottom));
-      justify-content: flex-end;
+
       :deep(.wd-button) {
-        --wot-button-medium-height: 38px;
-        width: 70%;
+        --wot-button-medium-height: 44px;
+        --wot-button-medium-fs: 14px;
+        width: 100%;
         display: block;
         margin: 0 auto;
+        border-radius: 18px;
+        box-shadow: var(--shadow-sm);
       }
     }
   }
+
   .tabbar {
     /* #ifdef H5 */
     height: var(--window-bottom);
     /* #endif */
   }
+
   .btnGroup {
     display: flex;
-    border-radius: 16px;
-    border: 1px solid rgba(255, 255, 255, 0.6);
-    height: 28px;
-    line-height: 28px;
-    color: #fff;
     align-items: center;
+    height: 56rpx;
+    line-height: 56rpx;
+    color: var(--brand-600);
+    border: 1rpx solid rgba(49, 95, 203, 0.18);
+    border-radius: 999px;
+    background: rgba(49, 95, 203, 0.08);
+
     .left {
-      border-right: 1px solid rgba(255, 255, 255, 0.6);
+      border-right: 1rpx solid rgba(49, 95, 203, 0.16);
     }
 
     .left,
     .right {
-      padding: 0 8px;
-      font-size: 14px;
+      padding: 0 18rpx;
+      font-size: 13px;
+      font-weight: 600;
     }
   }
+
   .mpNavLeft {
     display: flex;
-    color: #fff;
+    align-items: center;
+    gap: 8rpx;
+    color: var(--ink-700);
+    font-weight: 500;
   }
 }
 </style>

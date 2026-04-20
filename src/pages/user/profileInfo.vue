@@ -44,42 +44,35 @@ onLoad(async () => {
 </script>
 
 <style scoped lang="scss">
-.page-scroll {
-  background: #eef2f7;
-}
-
-.page-shell {
-  padding: 16px 16px 28px;
-}
-
 .field-list {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  margin-bottom: 16px;
+  gap: 16rpx;
 }
 
 .field-card {
-  padding: 16px;
-  border-radius: 20px;
-  background: #fff;
+  padding: 24rpx;
+  border: 1rpx solid var(--hairline);
+  border-radius: var(--r-lg);
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
 }
 
 .field-label,
 .field-description {
   font-size: 12px;
   line-height: 1.6;
-  color: #7a8499;
+  color: var(--ink-400);
 }
 
 .field-value {
-  margin-top: 8px;
+  margin-top: 10rpx;
   font-size: 16px;
-  font-weight: 700;
-  color: #1b2437;
+  font-weight: 800;
+  color: var(--ink-900);
 }
 
 .field-description {
-  margin-top: 6px;
+  margin-top: 10rpx;
 }
 </style>

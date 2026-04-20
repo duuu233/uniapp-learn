@@ -53,64 +53,62 @@ onLoad(async () => {
 </script>
 
 <style scoped lang="scss">
-.page-scroll {
-  background: #eef2f7;
-}
-
-.page-shell {
-  padding: 16px 16px 28px;
-}
-
 .intro-card,
 .palette-card {
-  border-radius: 20px;
-  background: #fff;
+  border: 1rpx solid var(--hairline);
+  border-radius: var(--r-lg);
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
 }
 
 .intro-card {
-  padding: 18px;
+  padding: 28rpx;
+  background:
+    linear-gradient(180deg, rgba(49, 95, 203, 0.05) 0%, rgba(49, 95, 203, 0) 120rpx),
+    var(--surface);
 }
 
 .intro-title,
 .palette-title {
   font-size: 16px;
-  font-weight: 700;
-  color: #1b2437;
+  font-weight: 800;
+  color: var(--ink-900);
 }
 
 .intro-description,
 .palette-description {
-  margin-top: 8px;
+  margin-top: 12rpx;
   font-size: 12px;
   line-height: 1.7;
-  color: #7a8499;
+  color: var(--ink-400);
 }
 
 .palette-list {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  margin: 16px 0;
+  gap: 16rpx;
 }
 
 .palette-card {
-  padding: 16px;
+  padding: 24rpx;
 }
 
 .palette-header {
   display: flex;
   justify-content: space-between;
-  gap: 12px;
+  gap: 16rpx;
 }
 
 .palette-swatches {
   display: flex;
-  gap: 8px;
+  gap: 10rpx;
 }
 
 .swatch {
-  width: 22px;
-  height: 22px;
+  width: 24px;
+  height: 24px;
   border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.88);
+  box-shadow: 0 6rpx 14rpx rgba(15, 23, 42, 0.08);
 }
 </style>

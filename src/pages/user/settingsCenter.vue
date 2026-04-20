@@ -46,49 +46,42 @@ onLoad(async () => {
 </script>
 
 <style scoped lang="scss">
-.page-scroll {
-  background: #eef2f7;
-}
-
-.page-shell {
-  padding: 16px 16px 28px;
-}
-
 .setting-list {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  margin-bottom: 16px;
+  gap: 16rpx;
 }
 
 .setting-card {
-  padding: 16px;
-  border-radius: 20px;
-  background: #fff;
+  padding: 24rpx;
+  border: 1rpx solid var(--hairline);
+  border-radius: var(--r-lg);
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
 }
 
 .setting-top {
   display: flex;
   justify-content: space-between;
-  gap: 12px;
+  gap: 16rpx;
 }
 
 .setting-title {
   font-size: 15px;
-  font-weight: 700;
-  color: #1b2437;
+  font-weight: 800;
+  color: var(--ink-900);
 }
 
 .setting-value {
   font-size: 13px;
-  font-weight: 600;
-  color: #1f6fff;
+  font-weight: 700;
+  color: var(--brand-600);
 }
 
 .setting-description {
-  margin-top: 8px;
+  margin-top: 12rpx;
   font-size: 12px;
   line-height: 1.7;
-  color: #7a8499;
+  color: var(--ink-400);
 }
 </style>

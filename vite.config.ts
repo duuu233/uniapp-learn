@@ -1,43 +1,35 @@
-import Uni from '@dcloudio/vite-plugin-uni'
-import dayjs from 'dayjs'
-import path from 'node:path'
-import { defineConfig, loadEnv } from 'vite'
 import fs from 'node:fs'
-import { generateComponentTypes } from './vite-plugins/generateComponentTypes'
-console.log('进入 vite')
-// @see https://uni-helper.js.org/vite-plugin-uni-pages
-import UniPages from '@uni-helper/vite-plugin-uni-pages'
-// @see https://uni-helper.js.org/vite-plugin-uni-layouts
+import path from 'node:path'
+
+import Uni from '@dcloudio/vite-plugin-uni'
 import UniLayouts from '@uni-helper/vite-plugin-uni-layouts'
-// @see https://github.com/uni-helper/vite-plugin-uni-platform
-// 需要与 @uni-helper/vite-plugin-uni-pages 插件一起使用
-import UniPlatform from '@uni-helper/vite-plugin-uni-platform'
-// @see https://github.com/uni-helper/vite-plugin-uni-manifest
 import UniManifest from '@uni-helper/vite-plugin-uni-manifest'
-// @see https://unocss.dev/
+import UniPages from '@uni-helper/vite-plugin-uni-pages'
+import UniPlatform from '@uni-helper/vite-plugin-uni-platform'
+import dayjs from 'dayjs'
 import { visualizer } from 'rollup-plugin-visualizer'
 import UnoCSS from 'unocss/vite'
 import AutoImport from 'unplugin-auto-import/vite'
-import ViteRestart from 'vite-plugin-restart'
-import { copyNativeRes } from './vite-plugins/copyNativeRes'
+import { defineConfig, loadEnv } from 'vite'
 import { viteMockServe } from 'vite-plugin-mock'
+import ViteRestart from 'vite-plugin-restart'
 
-// https://vitejs.dev/config/
-export default ({ command, mode }) => {
-  // console.log(mode === process.env.NODE_ENV) // true
+import { copyNativeRes } from './vite-plugins/copyNativeRes'
+import { generateComponentTypes } from './vite-plugins/generateComponentTypes'
 
-  // mode: 区分生产环境还是开发环境
-  console.log('command, mode -> ', command, mode)
-  // pnpm dev:h5 时得到 => serve development
-  // pnpm build:h5 时得到 => build production
-  // pnpm dev:mp-weixin 时得到 => build development (注意区别，command为build)
-  // pnpm build:mp-weixin 时得到 => build production
-  // pnpm dev:app 时得到 => build development (注意区别，command为build)
-  // pnpm build:app 时得到 => build production
-  // dev 和 build 命令可以分别使用 .env.development 和 .env.production 的环境变量
+const subPackageCandidates = [
+  'src/pages-home',
+  'src/pages-message',
+  'src/pages-user',
+  'src/pages-work',
+  'src/pages-sub',
+]
 
+export default ({ mode }) => {
   const { UNI_PLATFORM } = process.env
-  console.log('UNI_PLATFORM -> ', UNI_PLATFORM) // 得到 mp-weixin, h5, app 等
+  const subPackageDirs = subPackageCandidates.filter((dir) =>
+    fs.existsSync(path.resolve(process.cwd(), dir)),
+  )
 
   const env = loadEnv(mode, path.resolve(process.cwd(), 'env'))
   const {
@@ -49,40 +41,27 @@ export default ({ command, mode }) => {
     VITE_APP_PROXY_PREFIX,
     VITE_USE_MOCK,
   } = env
-  console.log('环境变量 env -> ', env)
-  // 在h5平台把vite环境变量提取出来替换成window上的属性
-  const define = UNI_PLATFORM === 'h5' && mode === 'production' ? createDynamicDefine(env) : {}
-  return defineConfig({
-    envDir: './env', // 自定义env目录
 
+  const define = UNI_PLATFORM === 'h5' && mode === 'production' ? createDynamicDefine(env) : {}
+
+  return defineConfig({
+    envDir: './env',
     plugins: [
       generateComponentTypes(),
       UniPages({
         exclude: ['**/components/**/**.*'],
-        routeBlockLang: 'json5', // 虽然设了默认值，但是vue文件还是要加上 lang="json5", 这样才能很好地格式化
-        // homePage 通过 vue 文件的 route-block 的type="home"来设定
-        // pages 目录为 src/pages，分包目录不能配置在pages目录下
-        subPackages: [
-          'src/pages-home',
-          'src/pages-message',
-          'src/pages-user',
-          'src/pages-work',
-          'src/pages-sub',
-        ], // 是个数组，可以配置多个，但是不能为pages里面的目录
+        routeBlockLang: 'json5',
+        subPackages: subPackageDirs,
         dts: 'src/types/uni-pages.d.ts',
       }),
       UniLayouts(),
       UniPlatform(),
       UniManifest(),
-      // UniXXX 需要在 Uni 之前引入
       Uni(),
       {
-        // 临时解决 dcloudio 官方的 @dcloudio/uni-mp-compiler 出现的编译 BUG
-        // 参考 github issue: https://github.com/dcloudio/uni-app/issues/4952
-        // 自定义插件禁用 vite:vue 插件的 devToolsEnabled，强制编译 vue 模板时 inline 为 true
         name: 'fix-vite-plugin-vue',
         configResolved(config) {
-          const plugin = config.plugins.find((p) => p.name === 'vite:vue')
+          const plugin = config.plugins.find((item) => item.name === 'vite:vue')
           if (plugin && plugin.api && plugin.api.options) {
             plugin.api.options.devToolsEnabled = false
           }
@@ -92,23 +71,19 @@ export default ({ command, mode }) => {
       AutoImport({
         imports: ['vue', 'uni-app'],
         dts: 'src/types/auto-import.d.ts',
-        dirs: ['src/hooks'], // 自动导入 hooks
+        dirs: ['src/hooks'],
         eslintrc: { enabled: true },
-        vueTemplate: true, // default false
+        vueTemplate: true,
       }),
-
       ViteRestart({
-        // 通过这个插件，在修改vite.config.js文件则不需要重新运行也生效配置
         restart: ['vite.config.js'],
       }),
-      // h5环境增加 BUILD_TIME 和 BUILD_BRANCH
       UNI_PLATFORM === 'h5' && {
         name: 'html-transform',
         transformIndexHtml(html) {
           return html.replace('%BUILD_TIME%', dayjs().format('YYYY-MM-DD HH:mm:ss'))
         },
       },
-      // 打包分析插件，h5 + 生产环境才弹出
       UNI_PLATFORM === 'h5' &&
         mode === 'production' &&
         visualizer({
@@ -117,12 +92,9 @@ export default ({ command, mode }) => {
           gzipSize: true,
           brotliSize: true,
         }),
-      // 只有在 app 平台时才启用 copyNativeRes 插件
       UNI_PLATFORM === 'app' && copyNativeRes(),
       viteMockServe({
-        // 指定 mock 文件目录
         mockPath: './mock',
-        // 开发服务器才启用mock数据
         enable: mode === 'development' && JSON.parse(VITE_USE_MOCK),
       }),
       UNI_PLATFORM === 'h5' && mode === 'production' && createEnvConfigPlugin(),
@@ -134,15 +106,9 @@ export default ({ command, mode }) => {
     },
     css: {
       postcss: {
-        plugins: [
-          // autoprefixer({
-          //   // 指定目标浏览器
-          //   overrideBrowserslist: ['> 1%', 'last 2 versions'],
-          // }),
-        ],
+        plugins: [],
       },
     },
-
     resolve: {
       alias: {
         '@': path.join(process.cwd(), './src'),
@@ -153,22 +119,20 @@ export default ({ command, mode }) => {
       host: '0.0.0.0',
       hmr: true,
       port: Number.parseInt(VITE_APP_PORT, 10),
-      // 仅 H5 端生效，其他端不生效（其他端走build，不走devServer)
       proxy: JSON.parse(VITE_APP_PROXY)
         ? {
             [VITE_APP_PROXY_PREFIX]: {
               target: VITE_SERVER_BASEURL,
               changeOrigin: true,
-              rewrite: (path) => path.replace(new RegExp(`^${VITE_APP_PROXY_PREFIX}`), ''),
+              rewrite: (requestPath) =>
+                requestPath.replace(new RegExp(`^${VITE_APP_PROXY_PREFIX}`), ''),
             },
           }
         : undefined,
     },
     build: {
-      // 方便非h5端调试
-      sourcemap: VITE_SHOW_SOURCEMAP === 'true', // 默认是false
+      sourcemap: VITE_SHOW_SOURCEMAP === 'true',
       target: 'es6',
-      // 开发环境不用压缩
       minify: mode === 'development' ? false : 'terser',
       terserOptions: {
         compress: {
@@ -179,7 +143,7 @@ export default ({ command, mode }) => {
     },
   })
 }
-// 环境变量映射到window上的属性
+
 function createDynamicDefine(envVars) {
   return Object.keys(envVars).reduce((acc, key) => {
     if (key.startsWith('VITE_')) {
@@ -188,6 +152,7 @@ function createDynamicDefine(envVars) {
     return acc
   }, {})
 }
+
 function createEnvConfigPlugin() {
   let mode = 'production'
   let envDir = process.cwd()
@@ -200,31 +165,28 @@ function createEnvConfigPlugin() {
     },
     async writeBundle(options) {
       const env = loadEnv(mode, path.resolve(process.cwd(), 'env'))
-      delete env['VITE_ROOT_DIR']
-      // 生成动态配置文件
+      delete env.VITE_ROOT_DIR
+
       const configContent = `window.__APP_CONFIG__ = ${JSON.stringify(env)};`
       const outputDir = options.dir || path.resolve(envDir, 'dist')
       const configPath = path.join(outputDir, 'app.config.js')
-      // 写入配置文件
       fs.writeFileSync(configPath, configContent, 'utf-8')
-      // 修改 index.html 注入脚本
+
       const indexPath = path.join(outputDir, 'index.html')
-      if (fs.existsSync(indexPath)) {
-        let html = fs.readFileSync(indexPath, 'utf-8')
-        // update-begin-author:liaozhiyang date:2025-05-27 for:【issues/87】h5打包部署后,Oauth2认证后无法正确引入app.config.js文件
-        let prefix = '/'
-        if (env.VITE_APP_PUBLIC_BASE) {
-          prefix = env.VITE_APP_PUBLIC_BASE
-        }
-        if (prefix.endsWith('/')) {
-          prefix = prefix.slice(0, -1)
-        }
-        const scriptTag = `<script src="${prefix}/app.config.js"></script>`
-        // update-end-author:liaozhiyang date:2025-05-27 for:【issues/87】h5打包部署后,Oauth2认证后无法正确引入app.config.js文件
-        if (!html.includes('app.config.js')) {
-          html = html.replace('</title>', `</title> \n ${scriptTag}`)
-          fs.writeFileSync(indexPath, html, 'utf-8')
-        }
+      if (!fs.existsSync(indexPath)) {
+        return
+      }
+
+      let html = fs.readFileSync(indexPath, 'utf-8')
+      let prefix = env.VITE_APP_PUBLIC_BASE || '/'
+      if (prefix.endsWith('/')) {
+        prefix = prefix.slice(0, -1)
+      }
+
+      const scriptTag = `<script src="${prefix}/app.config.js"></script>`
+      if (!html.includes('app.config.js')) {
+        html = html.replace('</title>', `</title> \n ${scriptTag}`)
+        fs.writeFileSync(indexPath, html, 'utf-8')
       }
     },
   }

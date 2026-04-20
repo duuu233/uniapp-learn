@@ -2,9 +2,9 @@
   "globalStyle": {
     "navigationStyle": "default",
     "navigationBarTitleText": "设备管理",
-    "navigationBarBackgroundColor": "#f5f7fb",
+    "navigationBarBackgroundColor": "#f8fafc",
     "navigationBarTextStyle": "black",
-    "backgroundColor": "#eef2f7"
+    "backgroundColor": "#f5f7fb"
   },
   "easycom": {
     "autoscan": true,
@@ -14,9 +14,9 @@
     }
   },
   "tabBar": {
-    "color": "#7a8499",
-    "selectedColor": "#1f6fff",
-    "backgroundColor": "#ffffff",
+    "color": "#8d98aa",
+    "selectedColor": "#315fcb",
+    "backgroundColor": "#fcfdff",
     "borderStyle": "black",
     "height": "52px",
     "fontSize": "11px",
@@ -227,26 +227,5 @@
       }
     }
   ],
-  "subPackages": [
-    {
-      "root": "pages-home",
-      "pages": []
-    },
-    {
-      "root": "pages-message",
-      "pages": []
-    },
-    {
-      "root": "pages-user",
-      "pages": []
-    },
-    {
-      "root": "pages-work",
-      "pages": []
-    },
-    {
-      "root": "pages-sub",
-      "pages": []
-    }
-  ]
+  "subPackages": []
 }

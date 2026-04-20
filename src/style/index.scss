@@ -1,42 +1,116 @@
-// @import './iconfont.css';
 @import '../static/iconfont/iconfont.css';
 @import './chat/style.scss';
-.test {
-  // 可以通过 @apply 多个样式封装整体样式
-  @apply mt-4 ml-4;
-
-  padding-top: 4px;
-  color: red;
-}
 
 :root,
 page {
   .uni-tabbar__label {
     margin-top: 1px !important;
   }
-  background-color: #f1f1f1;
 
+  background-color: #f5f7fb;
+
+  /* base surfaces */
+  --app-bg: #f5f7fb;
+  --app-bg-soft: #fafbfd;
+  --app-bg-elevated: #eef2f8;
+  --surface: #ffffff;
+  --surface-soft: #f8fafc;
+  --surface-muted: #f2f5f9;
+  --surface-strong: #e8edf5;
+  --hairline: rgba(15, 23, 42, 0.08);
+  --hairline-strong: rgba(15, 23, 42, 0.14);
+
+  /* brand */
+  --brand-50: #edf3ff;
+  --brand-100: #dce7ff;
+  --brand-200: #c1d4ff;
+  --brand-400: #5d83dd;
+  --brand-500: #315fcb;
+  --brand-600: #274ea9;
+  --brand-700: #203f86;
+  --brand-grad: linear-gradient(135deg, #315fcb 0%, #436ed2 100%);
+  --brand-grad-deep: linear-gradient(135deg, #1f3156 0%, #2d4776 55%, #37598c 100%);
+  --brand-glow: 0 20rpx 48rpx rgba(31, 49, 86, 0.14);
+
+  /* semantic */
+  --aurora-teal: #147d74;
+  --aurora-amber: #c9821d;
+  --aurora-rose: #ca4a4a;
+  --aurora-violet: #6c63c9;
+
+  --status-online-bg: #e7f6ef;
+  --status-online-fg: #18794e;
+  --status-pending-bg: #fff3dd;
+  --status-pending-fg: #b56c12;
+  --status-offline-bg: #fee8e8;
+  --status-offline-fg: #c24141;
+  --status-info-bg: #edf3ff;
+  --status-info-fg: #315fcb;
+
+  /* text */
+  --ink-900: #182235;
+  --ink-700: #324154;
+  --ink-500: #59677c;
+  --ink-400: #7d899b;
+  --ink-300: #9eabbd;
+  --ink-on-brand: #f8fbff;
+
+  /* radius */
+  --r-xs: 10rpx;
+  --r-sm: 18rpx;
+  --r-md: 24rpx;
+  --r-lg: 32rpx;
+  --r-xl: 40rpx;
+  --r-pill: 999px;
+
+  /* spacing */
+  --sp-1: 8rpx;
+  --sp-2: 12rpx;
+  --sp-3: 16rpx;
+  --sp-4: 24rpx;
+  --sp-5: 32rpx;
+  --sp-6: 40rpx;
+
+  /* shadows */
+  --shadow-xs: 0 2rpx 6rpx rgba(15, 23, 42, 0.03);
+  --shadow-sm: 0 10rpx 24rpx rgba(15, 23, 42, 0.05);
+  --shadow-md: 0 20rpx 46rpx rgba(15, 23, 42, 0.08);
+  --shadow-lg: 0 28rpx 64rpx rgba(15, 23, 42, 0.1);
+
+  /* legacy compatibility */
   --UI-BG: #fff;
-  --UI-BG-1: #f7f7f7;
+  --UI-BG-1: #f7f8fb;
   --UI-BG-2: #fff;
-  --UI-BG-3: #f7f7f7;
+  --UI-BG-3: #f4f6fa;
   --UI-BG-4: #4c4c4c;
   --UI-BG-5: #fff;
   --UI-FG: #000;
-  --UI-FG-0: rgba(0, 0, 0, 0.9);
-  --UI-FG-HALF: rgba(0, 0, 0, 0.9);
-  --UI-FG-1: rgba(0, 0, 0, 0.5);
-  --UI-FG-2: rgba(0, 0, 0, 0.3);
-  --UI-FG-3: rgba(0, 0, 0, 0.1);
-  --color-gray: #aaa;
-  --color-grey: #8799a3;
-  --color-orange: #f37b1d;
-  --color-olive: #8dc63f;
-  --color-cyan: #1cbbb4;
-  --color-red: #e54d42;
-  --color-yellow: #fbbd08;
-  --color-blue: #0081ff;
-  --color-green: #39b54a;
+  --UI-FG-0: rgba(24, 34, 53, 0.94);
+  --UI-FG-HALF: rgba(50, 65, 84, 0.82);
+  --UI-FG-1: rgba(89, 103, 124, 0.72);
+  --UI-FG-2: rgba(125, 137, 155, 0.48);
+  --UI-FG-3: rgba(24, 34, 53, 0.1);
+  --color-gray: #a5adba;
+  --color-grey: #7d899b;
+  --color-orange: #c9821d;
+  --color-olive: #6e9d47;
+  --color-cyan: #147d74;
+  --color-red: #ca4a4a;
+  --color-yellow: #d8a319;
+  --color-blue: var(--brand-500);
+  --color-green: #2f915e;
+
+  /* wot design */
+  --wot-color-theme: var(--brand-500);
+  --wot-navbar-color: var(--ink-900);
+  --wot-navbar-desc-font-color: var(--ink-500);
+  --wot-text-info-color: var(--ink-700);
+  --wot-input-color: var(--ink-700);
+  --wot-cell-value-color: var(--ink-500);
+  --wot-textarea-color: var(--ink-700);
+  --wot-input-disabled-color: var(--ink-300);
+  --wot-picker-column-disabled-color: var(--ink-300);
+  --wot-input-clear-color: var(--ink-300);
 
   .cu-text-grey {
     color: var(--color-grey);
@@ -53,9 +127,6 @@ page {
   .cu-text-olive {
     color: var(--color-olive);
   }
-  .cu-text-red {
-    color: var(--color-red);
-  }
   .cu-text-cyan {
     color: var(--color-cyan);
   }
@@ -68,33 +139,21 @@ page {
   .cu-text-green {
     color: var(--color-green);
   }
-  // 主题色
-  --wot-color-theme: #0081ff;
-  // 导航
-  --wot-navbar-color: #fff;
-  --wot-navbar-desc-font-color: #fff;
-  // 文字
-  --wot-text-info-color: var(--UI-FG-0);
-  // 输入框
-  --wot-input-color: #555;
-  --wot-cell-value-color: #555;
-  --wot-textarea-color: #555;
 
-  // 重置 wot-design-uni
-  --wot-input-disabled-color: #bab8b8;
-  --wot-picker-column-disabled-color: #bab8b8;
-  --wot-input-clear-color: #8f8f8f;
   .wd-button {
     &.is-round {
-      border-radius: 4px !important;
+      border-radius: 18px !important;
     }
+
     &.is-plain {
       overflow: visible;
     }
   }
+
   .wd-cell__left {
     align-items: center;
   }
+
   .wd-popup {
     &.wd-popup--right,
     &.wd-popup--left {
@@ -102,42 +161,173 @@ page {
       height: calc(100vh - 44px);
     }
   }
+
   .wd-input {
     &.is-cell {
       --wot-cell-title-color: var(--UI-FG-0);
       --wot-input-cell-padding: 14px;
       --wot-input-fs: 15px;
+
       .wd-input__label.is-required::after {
         top: 6px;
       }
     }
   }
-  // 万年历组件
+
   .uni-calendar {
     .uni-calendar__header {
       .uni-calendar__header-btn-box {
-        &:first-child {
-          .uni-calendar__header-text {
-            color: #9f9f9f;
-          }
+        &:first-child .uni-calendar__header-text {
+          color: var(--ink-400);
         }
-        &:last-child {
-          .uni-calendar__header-text {
-            color: var(--wot-color-theme);
-          }
+
+        &:last-child .uni-calendar__header-text {
+          color: var(--brand-500);
         }
       }
+
       .uni-calendar__header-text {
-        text-align: center;
         width: 100px;
         font-size: 24px;
+        text-align: center;
       }
     }
   }
 }
+
 .uni-scroll-view {
   .uni-scroll-view {
-    // ios13+不需要加这个属性了（这个属性和overflow:hidden一起使用，导致子孙元素即使设置了position:fixed也被裁剪了）
     -webkit-overflow-scrolling: auto;
+  }
+}
+
+.page-scroll {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.85) 0%, rgba(255, 255, 255, 0) 140rpx),
+    linear-gradient(180deg, #fafbfd 0%, #f3f6fb 100%);
+}
+
+.page-shell {
+  display: flex;
+  flex-direction: column;
+  gap: 24rpx;
+  box-sizing: border-box;
+  min-height: 100%;
+  padding: 28rpx 24rpx 56rpx;
+}
+
+.aurora-bg {
+  background:
+    linear-gradient(140deg, rgba(49, 95, 203, 0.08) 0%, rgba(49, 95, 203, 0) 38%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.84) 0%, rgba(255, 255, 255, 0) 160rpx),
+    linear-gradient(180deg, #fafbfd 0%, #f3f6fb 100%);
+}
+
+.app-card {
+  background: var(--surface);
+  border: 1rpx solid var(--hairline);
+  border-radius: var(--r-md);
+  box-shadow: var(--shadow-sm);
+}
+
+.app-card-elevated {
+  background: var(--surface);
+  border: 1rpx solid var(--hairline);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-md);
+}
+
+.app-card-soft {
+  background: linear-gradient(180deg, #fbfcfe 0%, #f4f7fb 100%);
+  border: 1rpx solid rgba(49, 95, 203, 0.08);
+  border-radius: var(--r-md);
+}
+
+.app-section-kicker {
+  display: inline-flex;
+  align-items: center;
+  padding: 6rpx 16rpx;
+  border-radius: var(--r-pill);
+  background: var(--brand-50);
+  color: var(--brand-700);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1rpx;
+}
+
+.app-section-title {
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: -0.3rpx;
+  color: var(--ink-900);
+}
+
+.app-section-desc {
+  margin-top: 8rpx;
+  font-size: 12px;
+  line-height: 1.7;
+  color: var(--ink-400);
+}
+
+.app-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6rpx;
+  padding: 6rpx 16rpx;
+  border-radius: var(--r-pill);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.4rpx;
+}
+
+.app-pill.is-online {
+  background: var(--status-online-bg);
+  color: var(--status-online-fg);
+}
+
+.app-pill.is-pending {
+  background: var(--status-pending-bg);
+  color: var(--status-pending-fg);
+}
+
+.app-pill.is-offline {
+  background: var(--status-offline-bg);
+  color: var(--status-offline-fg);
+}
+
+.app-pill.is-info {
+  background: var(--status-info-bg);
+  color: var(--status-info-fg);
+}
+
+.app-dot {
+  width: 10rpx;
+  height: 10rpx;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: 0.9;
+}
+
+@keyframes app-rise {
+  from {
+    opacity: 0;
+    transform: translateY(10rpx);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes aurora-rise {
+  from {
+    opacity: 0;
+    transform: translateY(10rpx);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }

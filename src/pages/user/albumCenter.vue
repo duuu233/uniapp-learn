@@ -44,25 +44,18 @@ onLoad(async () => {
 </script>
 
 <style scoped lang="scss">
-.page-scroll {
-  background: #eef2f7;
-}
-
-.page-shell {
-  padding: 16px 16px 28px;
-}
-
 .album-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
-  margin-bottom: 16px;
+  gap: 16rpx;
 }
 
 .album-card {
-  padding: 14px;
-  border-radius: 20px;
-  background: #fff;
+  padding: 22rpx;
+  border: 1rpx solid var(--hairline);
+  border-radius: var(--r-lg);
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
 }
 
 .album-cover {
@@ -70,23 +63,23 @@ onLoad(async () => {
   align-items: center;
   justify-content: center;
   height: 110px;
-  border-radius: 16px;
-  background: linear-gradient(135deg, #dbe7ff, #eef4ff);
+  border-radius: var(--r-md);
+  background: linear-gradient(135deg, #e5edff 0%, #f7f9fd 100%);
   font-size: 28px;
-  font-weight: 700;
-  color: #1f6fff;
+  font-weight: 800;
+  color: var(--brand-600);
 }
 
 .album-title {
-  margin-top: 12px;
+  margin-top: 16rpx;
   font-size: 15px;
-  font-weight: 700;
-  color: #1b2437;
+  font-weight: 800;
+  color: var(--ink-900);
 }
 
 .album-meta {
-  margin-top: 6px;
+  margin-top: 10rpx;
   font-size: 12px;
-  color: #7a8499;
+  color: var(--ink-400);
 }
 </style>
