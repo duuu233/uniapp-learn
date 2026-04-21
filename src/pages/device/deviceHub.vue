@@ -15,441 +15,333 @@
 <template>
   <PageLayout :navbarShow="false">
     <scroll-view scroll-y class="page-scroll aurora-bg">
-      <view v-if="pageData" class="page-shell">
-        <view class="hero">
-          <view class="hero-glow" />
-          <view class="hero-kicker">Device · Hub</view>
-          <view class="hero-title">设备中心</view>
-          <view class="hero-subtitle">设备管理、绑定、搜索、连接和状态时间线统一收口在这里。</view>
+      <view class="page-shell">
+        <view class="hero app-card-elevated">
+          <view class="hero-kicker">Device Hub</view>
+          <view class="hero-title">我的设备</view>
+          <view class="hero-subtitle">管理设备名称、使用权限、轮播模式、连接状态和物理存储。</view>
         </view>
 
-        <view class="summary-grid">
-          <view v-for="(item, i) in pageData.summary" :key="item.label" class="summary-card" :style="{ '--i': i }">
-            <view class="summary-label">{{ item.label }}</view>
-            <view class="summary-value">{{ item.value }}</view>
-            <view class="summary-hint">{{ item.hint }}</view>
-          </view>
+        <view v-if="!hasLogin" class="empty-card app-card">
+          <view class="empty-title">请先登录</view>
+          <view class="empty-desc">设备管理页依赖微信绑定手机号快捷登录，用于识别当前用户的所有者/使用者权限。</view>
+          <button class="primary-button" @click="goMyCenter">去登录</button>
         </view>
 
-        <view class="section">
-          <view class="section-head">
-            <view class="app-section-kicker">Shortcuts</view>
-            <view class="section-title">快捷入口</view>
-          </view>
-          <view class="shortcut-list">
-            <view
-              v-for="item in pageData.shortcuts"
-              :key="item.title"
-              class="shortcut-card"
-              hover-class="shortcut-card--hover"
-              @click="openRoute(item.url)"
-            >
-              <view class="shortcut-body">
-                <view class="shortcut-title">{{ item.title }}</view>
-                <view class="shortcut-subtitle">{{ item.subtitle }}</view>
-              </view>
-              <view class="app-pill is-info">{{ item.badge }}</view>
+        <template v-else>
+          <view class="summary-grid">
+            <view v-for="item in summaryCards" :key="item.label" class="summary-card app-card">
+              <view class="summary-label">{{ item.label }}</view>
+              <view class="summary-value">{{ item.value }}</view>
+              <view class="summary-hint">{{ item.hint }}</view>
             </view>
           </view>
-        </view>
 
-        <view class="section">
-          <view class="section-head">
-            <view class="app-section-kicker">Devices</view>
-            <view class="section-title">设备列表</view>
+          <view v-if="currentDevice" class="current-card app-card">
+            <view class="section-title">当前设备</view>
+            <view class="current-name">{{ currentDevice.name }}</view>
+            <view class="summary-hint">
+              {{ currentDevice.serialNumber }} · {{ currentDevice.location }} · {{ formatDateLabel(currentDevice.lastSeenAt) }}
+            </view>
           </view>
+
           <view class="device-list">
-            <view v-for="item in pageData.devices" :key="item.id" class="device-card" hover-class="device-card--hover">
+            <view v-for="item in myDevices" :key="item.id" class="device-card app-card">
               <view class="device-top">
-                <view class="device-id">
-                  <view class="device-name">{{ item.name }}</view>
-                  <view class="device-sn">{{ item.serialNumber }}</view>
+                <view class="device-main">
+                  <template v-if="editingId === item.id">
+                    <input v-model.trim="editingName" class="inline-input" maxlength="20" placeholder="输入设备名称" />
+                    <view class="inline-actions">
+                      <view class="mini-button" @click="saveRename(item.id)">保存</view>
+                      <view class="mini-button" @click="cancelRename">取消</view>
+                    </view>
+                  </template>
+                  <template v-else>
+                    <view class="device-name">{{ item.name }}</view>
+                    <view class="device-meta">{{ item.serialNumber }} · {{ item.location }}</view>
+                  </template>
                 </view>
-                <view :class="['app-pill', statusClass(item.status)]">
+                <view :class="['app-pill', formatDeviceStatusClass(item.status)]">
                   <view class="app-dot" />
-                  <text>{{ item.status }}</text>
+                  <text>{{ formatDeviceStatus(item.status) }}</text>
                 </view>
               </view>
-              <view class="device-meta">{{ item.location }}</view>
+
+              <view class="device-tags">
+                <view class="tag-pill">{{ formatRole(getDeviceRole(item, userId)) }}</view>
+                <view class="tag-pill">所有者：{{ item.ownerName }}</view>
+                <view class="tag-pill">存储 {{ formatStorage(item) }}</view>
+              </view>
+
               <view class="device-stats">
-                <view class="device-stat">
-                  <view class="device-stat-label">信号</view>
-                  <view class="device-stat-value">{{ item.signal }}</view>
-                </view>
-                <view class="device-stat-divider" />
-                <view class="device-stat">
-                  <view class="device-stat-label">电量</view>
-                  <view class="device-stat-value">{{ item.battery }}</view>
-                </view>
-                <view class="device-stat-divider" />
-                <view class="device-stat">
-                  <view class="device-stat-label">最近</view>
-                  <view class="device-stat-value">{{ item.lastSeen }}</view>
-                </view>
+                <text>电量 {{ formatBattery(item.batteryLevel) }}</text>
+                <text>信号 {{ formatSignal(item.signalLevel) }}</text>
+                <text>连接 {{ item.connectionState === 'connected' ? '已连接' : '未连接' }}</text>
+              </view>
+
+              <view class="slideshow-row">
+                <text class="summary-hint">轮播模式</text>
+                <switch :checked="item.slideshowEnabled" color="#315fcb" @change="toggleSlideshow(item.id, $event)" />
+              </view>
+
+              <view class="action-row">
+                <view class="mini-button" @click="scenarioStore.setCurrentDevice(item.id)">设为当前设备</view>
+                <view class="mini-button" @click="startRename(item.id, item.name)">编辑名称</view>
+                <view class="mini-button" @click="toggleConnect(item.id)">{{ item.connectionState === 'connected' ? '断开连接' : '连接设备' }}</view>
+              </view>
+
+              <view class="action-row">
+                <view class="mini-button" @click="claimOwner(item.id)">设为所有者</view>
+                <view class="mini-button danger" @click="clearStorage(item.id)">一键清空</view>
               </view>
             </view>
           </view>
-        </view>
-
-        <view class="section">
-          <view class="section-head">
-            <view class="app-section-kicker">Timeline</view>
-            <view class="section-title">最新动态</view>
-          </view>
-          <view class="timeline-list">
-            <view v-for="(item, i) in pageData.timeline" :key="`${item.time}-${item.title}`" class="timeline-item">
-              <view class="timeline-rail">
-                <view class="timeline-dot" />
-                <view v-if="i < pageData.timeline.length - 1" class="timeline-line" />
-              </view>
-              <view class="timeline-main">
-                <view class="timeline-time">{{ item.time }}</view>
-                <view class="timeline-title">{{ item.title }}</view>
-                <view class="timeline-description">{{ item.description }}</view>
-              </view>
-            </view>
-          </view>
-        </view>
-
-        <ApiDraftPanel :items="pageData.requestDrafts" />
+        </template>
       </view>
     </scroll-view>
   </PageLayout>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
-import { onLoad } from '@dcloudio/uni-app'
-import ApiDraftPanel from '@/components/scenario/ApiDraftPanel.vue'
-import { getDeviceHubPageData, type DeviceHubPageData } from '@/service/scenario'
+import { computed, ref } from 'vue'
+import { onShow } from '@dcloudio/uni-app'
+import { useScenarioStore, useUserStore } from '@/store'
+import {
+  formatBattery,
+  formatDateLabel,
+  formatDeviceStatus,
+  formatDeviceStatusClass,
+  formatRole,
+  formatSignal,
+  formatStorage,
+  getAccessibleDevices,
+  getCurrentScenarioUserId,
+  getDeviceRole,
+} from '@/service/scenario'
 
-const pageData = ref<DeviceHubPageData | null>(null)
+const scenarioStore = useScenarioStore()
+const userStore = useUserStore()
 
-const openRoute = (url: string) => {
-  uni.navigateTo({ url })
+const editingId = ref('')
+const editingName = ref('')
+
+const userId = computed(() => getCurrentScenarioUserId(userStore.userInfo.userid))
+const hasLogin = computed(() => !!userStore.isLogined)
+const myDevices = computed(() => getAccessibleDevices(scenarioStore.devices, userId.value))
+const currentDevice = computed(() => myDevices.value.find((item) => item.id === scenarioStore.currentDeviceId) || myDevices.value[0] || null)
+
+const summaryCards = computed(() => [
+  {
+    label: '设备数量',
+    value: `${myDevices.value.length}`,
+    hint: '我的可操作设备',
+  },
+  {
+    label: '已连接',
+    value: `${myDevices.value.filter((item) => item.connectionState === 'connected').length}`,
+    hint: '当前小程序会话',
+  },
+  {
+    label: '所有者设备',
+    value: `${myDevices.value.filter((item) => getDeviceRole(item, userId.value) === 'owner').length}`,
+    hint: '具备完整管理权限',
+  },
+])
+
+function goMyCenter() {
+  uni.switchTab({ url: '/pages/user/people' })
 }
 
-const statusClass = (status: string) => {
-  if (status === '在线') return 'is-online'
-  if (status === '待激活') return 'is-pending'
-  return 'is-offline'
+function startRename(deviceId: string, currentName: string) {
+  editingId.value = deviceId
+  editingName.value = currentName
 }
 
-onLoad(async () => {
-  pageData.value = await getDeviceHubPageData()
+function cancelRename() {
+  editingId.value = ''
+  editingName.value = ''
+}
+
+function saveRename(deviceId: string) {
+  const result = scenarioStore.renameDevice(deviceId, editingName.value)
+  uni.showToast({ title: result.message, icon: result.success ? 'success' : 'none' })
+  if (result.success) cancelRename()
+}
+
+function claimOwner(deviceId: string) {
+  const result = scenarioStore.claimDeviceOwner(deviceId)
+  uni.showToast({ title: result.message, icon: result.success ? 'success' : 'none' })
+}
+
+function clearStorage(deviceId: string) {
+  uni.showModal({
+    title: '确认一键清空',
+    content: '该操作会清空目标设备的物理存储，但保留我的相册记录。',
+    confirmColor: '#c24141',
+    success: ({ confirm }) => {
+      if (!confirm) return
+      const result = scenarioStore.clearDeviceStorage(deviceId)
+      uni.showToast({ title: result.message, icon: result.success ? 'success' : 'none' })
+    },
+  })
+}
+
+function toggleSlideshow(deviceId: string, event: Record<string, any>) {
+  const result = scenarioStore.toggleSlideshow(deviceId, !!event.detail.value)
+  uni.showToast({ title: result.message, icon: result.success ? 'success' : 'none' })
+}
+
+function toggleConnect(deviceId: string) {
+  const target = scenarioStore.getDeviceById(deviceId)
+  if (!target) return
+  const result =
+    target.connectionState === 'connected'
+      ? scenarioStore.disconnectDevice(deviceId)
+      : scenarioStore.connectDevice(deviceId)
+  uni.showToast({ title: result.message, icon: result.success ? 'success' : 'none' })
+}
+
+onShow(() => {
+  scenarioStore.bootstrap()
 })
 </script>
 
 <style scoped lang="scss">
-.page-shell {
-  gap: 28rpx;
+.hero,
+.current-card,
+.empty-card {
+  padding: 28rpx 24rpx;
 }
 
-/* === Hero === */
 .hero {
-  position: relative;
-  padding: 42rpx 36rpx 38rpx;
-  border: 1rpx solid rgba(255, 255, 255, 0.08);
-  border-radius: var(--r-xl);
   background: var(--brand-grad-deep);
   color: var(--ink-on-brand);
-  box-shadow: var(--brand-glow);
-  overflow: hidden;
-  animation: aurora-rise 0.5s ease both;
-}
-
-.hero-glow {
-  position: absolute;
-  top: -120rpx;
-  right: -90rpx;
-  width: 340rpx;
-  height: 340rpx;
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(255, 255, 255, 0.14) 0%, rgba(255, 255, 255, 0) 72%);
-  pointer-events: none;
 }
 
 .hero-kicker {
-  display: inline-block;
-  padding: 6rpx 18rpx;
+  display: inline-flex;
+  padding: 8rpx 18rpx;
   border-radius: var(--r-pill);
-  background: rgba(255, 255, 255, 0.1);
-  border: 1rpx solid rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.12);
   font-size: 11px;
-  letter-spacing: 1.4rpx;
   font-weight: 700;
 }
 
 .hero-title {
-  margin-top: 22rpx;
-  font-size: 25px;
+  margin-top: 18rpx;
+  font-size: 22px;
   font-weight: 800;
-  letter-spacing: -0.4rpx;
 }
 
 .hero-subtitle {
-  margin-top: 14rpx;
+  margin-top: 12rpx;
   font-size: 13px;
   line-height: 1.7;
   color: rgba(255, 255, 255, 0.78);
-  max-width: 92%;
 }
 
-/* === Summary === */
 .summary-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 20rpx;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16rpx;
 }
 
 .summary-card {
-  position: relative;
-  padding: 28rpx 26rpx;
-  border: 1rpx solid var(--hairline);
-  border-radius: var(--r-md);
-  background: var(--surface);
-  box-shadow: var(--shadow-sm);
-  overflow: hidden;
-  animation: aurora-rise 0.5s ease both;
-  animation-delay: calc(60ms * var(--i, 0));
+  padding: 22rpx 18rpx;
 }
 
-.summary-card::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 6rpx;
-  height: 72rpx;
-  background: var(--brand-grad);
-  border-radius: 0 4rpx 4rpx 0;
-}
-
-.summary-label {
+.summary-label,
+.summary-hint,
+.device-meta {
   font-size: 12px;
+  line-height: 1.6;
   color: var(--ink-400);
-  letter-spacing: 0.4rpx;
 }
 
-.summary-value {
-  margin-top: 14rpx;
-  font-size: 28px;
-  font-weight: 800;
-  color: var(--ink-900);
-  letter-spacing: -0.6rpx;
-  font-feature-settings: 'tnum';
-}
-
-.summary-hint {
-  margin-top: 8rpx;
-  font-size: 12px;
-  color: var(--ink-400);
-  line-height: 1.5;
-}
-
-/* === Section === */
-.section {
-  padding: 32rpx 28rpx 28rpx;
-  border: 1rpx solid var(--hairline);
-  border-radius: var(--r-lg);
-  background: var(--surface);
-  box-shadow: var(--shadow-sm);
-}
-
-.section-head {
-  margin-bottom: 22rpx;
-}
-
-.section-title {
+.summary-value,
+.section-title,
+.device-name,
+.empty-title,
+.current-name {
   margin-top: 10rpx;
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 800;
   color: var(--ink-900);
-  letter-spacing: -0.3rpx;
 }
 
-/* === Shortcuts === */
-.shortcut-list,
 .device-list {
   display: flex;
   flex-direction: column;
   gap: 16rpx;
 }
 
-.shortcut-card {
+.device-card {
+  padding: 24rpx;
+}
+
+.device-top,
+.action-row,
+.slideshow-row {
   display: flex;
-  align-items: center;
   justify-content: space-between;
   gap: 16rpx;
-  padding: 22rpx 24rpx;
-  border-radius: var(--r-md);
-  background: linear-gradient(180deg, #fbfcfe 0%, #f4f7fb 100%);
-  border: 1rpx solid var(--hairline);
-  transition: transform 0.18s ease, box-shadow 0.18s ease;
 }
 
-.shortcut-card--hover {
-  transform: translateY(-2rpx);
-  box-shadow: var(--shadow-sm);
+.device-main {
+  flex: 1;
+  min-width: 0;
 }
 
-.shortcut-title {
-  font-size: 15px;
-  font-weight: 700;
-  color: var(--ink-900);
-}
-
-.shortcut-subtitle {
-  margin-top: 8rpx;
-  font-size: 12px;
-  line-height: 1.6;
-  color: var(--ink-400);
-}
-
-/* === Device cards === */
-.device-card {
-  padding: 24rpx 24rpx 20rpx;
-  border-radius: var(--r-md);
-  background: var(--surface);
-  border: 1rpx solid var(--hairline);
-  box-shadow: var(--shadow-xs);
-  transition: transform 0.18s ease, box-shadow 0.18s ease;
-}
-
-.device-card--hover {
-  transform: translateY(-2rpx);
-  box-shadow: var(--shadow-sm);
-}
-
-.device-top {
+.device-tags,
+.device-stats,
+.inline-actions {
   display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
+  flex-wrap: wrap;
   gap: 12rpx;
+  margin-top: 16rpx;
 }
 
-.device-id {
-  min-width: 0;
+.tag-pill,
+.mini-button {
+  padding: 10rpx 16rpx;
+  border-radius: var(--r-pill);
+  background: var(--surface-soft);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--ink-700);
 }
 
-.device-name {
+.mini-button {
+  background: var(--brand-50);
+  color: var(--brand-700);
+  text-align: center;
+}
+
+.mini-button.danger {
+  background: var(--status-offline-bg);
+  color: var(--status-offline-fg);
+}
+
+.action-row {
+  margin-top: 16rpx;
+}
+
+.inline-input {
+  height: 76rpx;
+  padding: 0 20rpx;
+  border-radius: var(--r-md);
+  background: var(--surface-soft);
+  color: var(--ink-900);
+  font-size: 15px;
+}
+
+.primary-button {
+  margin-top: 24rpx;
+  border: none;
+  border-radius: 18px;
+  background: var(--brand-grad);
+  color: #fff;
   font-size: 15px;
   font-weight: 700;
-  color: var(--ink-900);
-}
-
-.device-sn {
-  margin-top: 6rpx;
-  font-size: 11px;
-  color: var(--ink-300);
-  letter-spacing: 0.4rpx;
-  font-feature-settings: 'tnum';
-}
-
-.device-meta {
-  margin-top: 14rpx;
-  font-size: 12px;
-  color: var(--ink-500);
-  line-height: 1.6;
-}
-
-.device-stats {
-  display: flex;
-  align-items: stretch;
-  margin-top: 18rpx;
-  padding: 14rpx 0;
-  border-top: 1rpx solid var(--hairline);
-}
-
-.device-stat {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4rpx;
-}
-
-.device-stat-label {
-  font-size: 11px;
-  color: var(--ink-300);
-  letter-spacing: 0.5rpx;
-}
-
-.device-stat-value {
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--ink-900);
-  font-feature-settings: 'tnum';
-}
-
-.device-stat-divider {
-  width: 1rpx;
-  background: var(--hairline);
-}
-
-/* === Timeline === */
-.timeline-list {
-  display: flex;
-  flex-direction: column;
-}
-
-.timeline-item {
-  display: flex;
-  gap: 22rpx;
-  padding-bottom: 24rpx;
-}
-
-.timeline-rail {
-  position: relative;
-  width: 14rpx;
-  flex-shrink: 0;
-  padding-top: 6rpx;
-}
-
-.timeline-dot {
-  position: relative;
-  width: 14rpx;
-  height: 14rpx;
-  border-radius: 50%;
-  background: var(--brand-500);
-  box-shadow: 0 0 0 4rpx rgba(49, 95, 203, 0.14);
-  z-index: 1;
-}
-
-.timeline-line {
-  position: absolute;
-  top: 22rpx;
-  left: 6rpx;
-  bottom: -24rpx;
-  width: 2rpx;
-  background: linear-gradient(180deg, rgba(49, 95, 203, 0.28), rgba(49, 95, 203, 0.06));
-}
-
-.timeline-main {
-  flex: 1;
-  min-width: 0;
-  padding-bottom: 4rpx;
-}
-
-.timeline-time {
-  font-size: 11px;
-  font-weight: 700;
-  color: var(--brand-600);
-  letter-spacing: 0.5rpx;
-  font-feature-settings: 'tnum';
-}
-
-.timeline-title {
-  margin-top: 6rpx;
-  font-size: 14px;
-  font-weight: 700;
-  color: var(--ink-900);
-}
-
-.timeline-description {
-  margin-top: 6rpx;
-  font-size: 12px;
-  line-height: 1.65;
-  color: var(--ink-400);
 }
 </style>

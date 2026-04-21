@@ -130,7 +130,7 @@ export default defineManifestConfig({
     },
     usingComponents: true,
     lazyCodeLoading: 'requiredComponents',
-    // __usePrivacyCheck__: true,
+    __usePrivacyCheck__: true,
   },
   'mp-alipay': {
     usingComponents: true,

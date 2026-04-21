@@ -115,7 +115,8 @@
       "es6": true
     },
     "usingComponents": true,
-    "lazyCodeLoading": "requiredComponents"
+    "lazyCodeLoading": "requiredComponents",
+    "__usePrivacyCheck__": true
   },
   "mp-alipay": {
     "usingComponents": true,

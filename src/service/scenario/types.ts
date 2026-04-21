@@ -1,182 +1,138 @@
-export interface RequestDraft {
-  label: string
-  method: 'GET' | 'POST' | 'PUT'
-  path: string
-  description: string
+export type DeviceStatus = 'online' | 'offline' | 'pending'
+export type DeviceRole = 'owner' | 'user' | 'unbound'
+export type CastStatus = 'success' | 'failed'
+export type PermissionState = 'granted' | 'pending' | 'denied' | 'unsupported'
+export type MediaSource = 'camera' | 'album'
+
+export interface ScenarioDevice {
+  id: string
+  serialNumber: string
+  name: string
+  type: string
+  location: string
+  note: string
+  status: DeviceStatus
+  batteryLevel: number
+  signalLevel: number
+  lastSeenAt: string
+  ownerUserId: string | null
+  ownerName: string
+  memberUserIds: string[]
+  storageTotalMb: number
+  storageUsedMb: number
+  slideshowEnabled: boolean
+  connectionState: 'connected' | 'disconnected'
 }
 
-export interface SummaryCard {
-  label: string
-  value: string
-  hint: string
+export interface ScenarioPhoto {
+  id: string
+  name: string
+  filePath: string
+  thumbnailPath: string
+  createdAt: string
+  uploadedByUserId: string
+  uploadedByName: string
+  source: MediaSource
+  sizeKb: number
+  width: number
+  height: number
+  deviceIds: string[]
+  isLocalAsset?: boolean
 }
 
-export interface RouteAction {
+export interface ScenarioCastRecord {
+  id: string
+  photoId: string | null
+  photoName: string
+  photoPath: string
+  deviceId: string
+  deviceName: string
+  status: CastStatus
+  message: string
+  createdAt: string
+  uploadedByUserId: string
+}
+
+export interface ScenarioGuideDoc {
+  id: string
+  deviceType: string
   title: string
-  subtitle: string
-  badge: string
-  url: string
-  isTab?: boolean
+  summary: string
+  bullets: string[]
 }
 
-export interface DeviceItem {
+export interface ScenarioLocationTrack {
+  id: string
+  deviceId: string
+  latitude: number
+  longitude: number
+  name: string
+  createdAt: string
+}
+
+export interface ScenarioSettings {
+  messageNotifications: boolean
+  companyName: string
+  contactPhone: string
+  contactWechat: string
+  aboutText: string
+  privacyPolicy: string
+  userAgreement: string
+}
+
+export interface ScenarioAppState {
+  initialized: boolean
+  currentDeviceId: string
+  devices: ScenarioDevice[]
+  photos: ScenarioPhoto[]
+  castRecords: ScenarioCastRecord[]
+  guides: ScenarioGuideDoc[]
+  settings: ScenarioSettings
+  locationTracks: ScenarioLocationTrack[]
+}
+
+export interface DraftPhotoInput {
+  id: string
+  name: string
+  tempFilePath: string
+  sizeKb: number
+  width: number
+  height: number
+  source: MediaSource
+}
+
+export interface ScenarioActionResult {
+  success: boolean
+  message: string
+  deviceId?: string
+}
+
+export interface CastActionResult {
+  success: boolean
+  message: string
+  successCount: number
+  failedCount: number
+  storageFull: boolean
+}
+
+export interface BindDevicePayload {
+  serialNumber: string
+  name: string
+  location: string
+  note: string
+}
+
+export interface BluetoothScanResult {
   id: string
   name: string
   serialNumber: string
-  status: '在线' | '离线' | '待激活'
+  signalLevel: number
+  type: string
   location: string
-  battery: string
-  signal: string
-  lastSeen: string
-  tags: string[]
 }
 
-export interface PermissionItem {
-  platform: string
-  title: string
-  description: string
-  required: boolean
-}
-
-export interface StepItem {
-  title: string
-  description: string
-  status: 'done' | 'active' | 'pending'
-}
-
-export interface KeyValueItem {
-  label: string
-  value: string
-  description?: string
-}
-
-export interface AlbumItem {
-  title: string
-  coverLabel: string
-  count: string
-  updatedAt: string
-}
-
-export interface TicketItem {
-  id: string
-  title: string
-  status: string
-  owner: string
-  updatedAt: string
-}
-
-export interface DocItem {
-  title: string
-  category: string
-  summary: string
-}
-
-export interface SettingItem {
-  title: string
-  value: string
-  description: string
-}
-
-export interface TimelineItem {
-  time: string
-  title: string
-  description: string
-}
-
-export interface DashboardPageData {
-  heroTitle: string
-  heroSubtitle: string
-  versionText: string
-  summary: SummaryCard[]
-  capabilities: RouteAction[]
-  devices: DeviceItem[]
-  requestDrafts: RequestDraft[]
-}
-
-export interface DeviceHubPageData {
-  summary: SummaryCard[]
-  shortcuts: RouteAction[]
-  devices: DeviceItem[]
-  timeline: TimelineItem[]
-  requestDrafts: RequestDraft[]
-}
-
-export interface MyCenterPageData {
-  profile: {
-    name: string
-    role: string
-    company: string
-    slogan: string
-  }
-  menuGroups: {
-    title: string
-    items: RouteAction[]
-  }[]
-  requestDrafts: RequestDraft[]
-}
-
-export interface PermissionPageData {
-  intro: string
-  permissions: PermissionItem[]
-  requestDrafts: RequestDraft[]
-}
-
-export interface BindDevicePageData {
-  steps: StepItem[]
-  formDraft: KeyValueItem[]
-  requestDrafts: RequestDraft[]
-}
-
-export interface SearchDevicePageData {
-  filters: KeyValueItem[]
-  results: DeviceItem[]
-  requestDrafts: RequestDraft[]
-}
-
-export interface ConnectionPageData {
-  summary: SummaryCard[]
-  steps: StepItem[]
-  requestDrafts: RequestDraft[]
-}
-
-export interface LocationPageData {
-  summary: SummaryCard[]
-  timeline: TimelineItem[]
-  requestDrafts: RequestDraft[]
-}
-
-export interface ThemePageData {
-  activeTheme: string
-  palettes: {
-    title: string
-    colors: string[]
-    description: string
-  }[]
-  requestDrafts: RequestDraft[]
-}
-
-export interface ProfilePageData {
-  fields: KeyValueItem[]
-  requestDrafts: RequestDraft[]
-}
-
-export interface AlbumPageData {
-  albums: AlbumItem[]
-  requestDrafts: RequestDraft[]
-}
-
-export interface ComplaintPageData {
-  channels: SummaryCard[]
-  tickets: TicketItem[]
-  requestDrafts: RequestDraft[]
-}
-
-export interface GuidePageData {
-  docs: DocItem[]
-  requestDrafts: RequestDraft[]
-}
-
-export interface SettingsPageData {
-  settings: SettingItem[]
-  requestDrafts: RequestDraft[]
+export interface ScenarioLocationSnapshot {
+  latitude: number
+  longitude: number
+  address: string
 }

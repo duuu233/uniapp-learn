@@ -15,44 +15,128 @@
 <template>
   <PageLayout navTitle="设备连接">
     <scroll-view scroll-y class="page-scroll">
-      <view v-if="pageData" class="page-shell">
+      <view class="page-shell">
         <view class="summary-grid">
-          <view v-for="item in pageData.summary" :key="item.label" class="summary-card">
+          <view v-for="item in summaryCards" :key="item.label" class="summary-card app-card">
             <view class="summary-label">{{ item.label }}</view>
             <view class="summary-value">{{ item.value }}</view>
             <view class="summary-hint">{{ item.hint }}</view>
           </view>
         </view>
 
-        <view class="section">
-          <view class="section-title">连接步骤</view>
-          <view class="step-list">
-            <view v-for="item in pageData.steps" :key="item.title" class="step-item">
-              <view :class="['step-flag', item.status]"></view>
-              <view class="step-body">
-                <view class="step-title">{{ item.title }}</view>
-                <view class="step-description">{{ item.description }}</view>
+        <view class="section app-card">
+          <view class="section-head">
+            <view>
+              <view class="section-title">蓝牙扫描</view>
+              <view class="section-desc">优先读取小程序蓝牙搜索结果，没有硬件回包时使用本地设备候选列表兜底。</view>
+            </view>
+            <view class="light-button" @click="scanNearbyDevices">重新扫描</view>
+          </view>
+
+          <view class="scan-list">
+            <view v-for="item in scanResults" :key="item.id" class="scan-card">
+              <view class="scan-top">
+                <view>
+                  <view class="scan-title">{{ item.name }}</view>
+                  <view class="scan-desc">{{ item.serialNumber }} · {{ item.location }}</view>
+                </view>
+                <view class="app-pill is-info">{{ item.type }}</view>
+              </view>
+              <view class="scan-bottom">
+                <text class="scan-desc">信号 {{ item.signalLevel }}/4</text>
+                <view class="mini-button" @click="connectOrBind(item.serialNumber)">{{ actionLabel(item.serialNumber) }}</view>
               </view>
             </view>
           </view>
         </view>
-
-        <ApiDraftPanel :items="pageData.requestDrafts" />
       </view>
     </scroll-view>
   </PageLayout>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
-import { onLoad } from '@dcloudio/uni-app'
-import ApiDraftPanel from '@/components/scenario/ApiDraftPanel.vue'
-import { getConnectionPageData, type ConnectionPageData } from '@/service/scenario'
+import { computed, ref } from 'vue'
+import { onShow } from '@dcloudio/uni-app'
+import { useScenarioStore, useUserStore } from '@/store'
+import {
+  buildDiscoveryCandidates,
+  formatDateLabel,
+  formatDeviceStatus,
+  getAccessibleDevices,
+  getCurrentScenarioUserId,
+  scanScenarioBluetoothDevices,
+} from '@/service/scenario'
+import type { BluetoothScanResult } from '@/service/scenario'
 
-const pageData = ref<ConnectionPageData | null>(null)
+const scenarioStore = useScenarioStore()
+const userStore = useUserStore()
 
-onLoad(async () => {
-  pageData.value = await getConnectionPageData()
+const scanResults = ref<BluetoothScanResult[]>([])
+
+const userId = computed(() => getCurrentScenarioUserId(userStore.userInfo.userid))
+const myDevices = computed(() => getAccessibleDevices(scenarioStore.devices, userId.value))
+
+const summaryCards = computed(() => [
+  {
+    label: '已绑定设备',
+    value: `${myDevices.value.length}`,
+    hint: '当前登录用户可操作设备',
+  },
+  {
+    label: '已连接',
+    value: `${myDevices.value.filter((item) => item.connectionState === 'connected').length}`,
+    hint: '蓝牙状态由本地连接流程维护',
+  },
+  {
+    label: '最近在线',
+    value: myDevices.value[0] ? formatDeviceStatus(myDevices.value[0].status) : '--',
+    hint: myDevices.value[0] ? formatDateLabel(myDevices.value[0].lastSeenAt) : '暂无设备',
+  },
+])
+
+function actionLabel(serialNumber: string) {
+  const target = scenarioStore.devices.find((item) => item.serialNumber === serialNumber)
+  if (!target) return '去绑定'
+  if (target.connectionState === 'connected') return '断开'
+  return '连接'
+}
+
+async function scanNearbyDevices() {
+  const bluetoothDevices = await scanScenarioBluetoothDevices()
+  const fallback = buildDiscoveryCandidates(scenarioStore.devices)
+  const mergedMap = new Map<string, BluetoothScanResult>()
+  ;[...fallback, ...bluetoothDevices].forEach((item) => {
+    if (!mergedMap.has(item.serialNumber)) {
+      mergedMap.set(item.serialNumber, item)
+    }
+  })
+  scanResults.value = [...mergedMap.values()]
+}
+
+function connectOrBind(serialNumber: string) {
+  const target = scenarioStore.devices.find((item) => item.serialNumber === serialNumber)
+  if (!target) {
+    uni.navigateTo({ url: `/pages/device/bindDevice?serialNumber=${encodeURIComponent(serialNumber)}` })
+    return
+  }
+
+  if (target.connectionState === 'connected') {
+    const result = scenarioStore.disconnectDevice(target.id)
+    uni.showToast({ title: result.message, icon: result.success ? 'success' : 'none' })
+    return
+  }
+
+  const result = scenarioStore.connectDevice(target.id)
+  if (!result.success && result.message.includes('绑定')) {
+    uni.navigateTo({ url: `/pages/device/bindDevice?serialNumber=${encodeURIComponent(serialNumber)}` })
+    return
+  }
+  uni.showToast({ title: result.message, icon: result.success ? 'success' : 'none' })
+}
+
+onShow(() => {
+  scenarioStore.bootstrap()
+  scanNearbyDevices()
 })
 </script>
 
@@ -65,20 +149,13 @@ onLoad(async () => {
 
 .summary-card,
 .section {
-  border: 1rpx solid var(--hairline);
-  border-radius: var(--r-lg);
-  background: var(--surface);
-  box-shadow: var(--shadow-sm);
-}
-
-.summary-card {
-  padding: 24rpx 22rpx;
-  border-radius: var(--r-md);
+  padding: 24rpx;
 }
 
 .summary-label,
 .summary-hint,
-.step-description {
+.section-desc,
+.scan-desc {
   font-size: 12px;
   line-height: 1.6;
   color: var(--ink-400);
@@ -86,54 +163,42 @@ onLoad(async () => {
 
 .summary-value,
 .section-title,
-.step-title {
+.scan-title {
+  margin-top: 10rpx;
   font-size: 15px;
   font-weight: 800;
   color: var(--ink-900);
 }
 
-.summary-value {
-  margin-top: 10rpx;
+.section-head,
+.scan-top,
+.scan-bottom {
+  display: flex;
+  justify-content: space-between;
+  gap: 16rpx;
 }
 
-.section {
-  padding: 28rpx;
+.light-button,
+.mini-button {
+  padding: 10rpx 18rpx;
+  border-radius: var(--r-pill);
+  background: var(--brand-50);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--brand-700);
+  white-space: nowrap;
 }
 
-.step-list {
+.scan-list {
   display: flex;
   flex-direction: column;
   gap: 16rpx;
   margin-top: 20rpx;
 }
 
-.step-item {
-  display: flex;
-  gap: 16rpx;
-  padding: 24rpx;
-  border: 1rpx solid rgba(49, 95, 203, 0.08);
+.scan-card {
+  padding: 22rpx;
   border-radius: var(--r-md);
-  background: linear-gradient(180deg, #fbfcfe 0%, #f4f7fb 100%);
-}
-
-.step-flag {
-  width: 12rpx;
-  border-radius: 999px;
-}
-
-.step-flag.done {
-  background: var(--status-online-fg);
-}
-
-.step-flag.active {
-  background: var(--brand-500);
-}
-
-.step-flag.pending {
-  background: var(--ink-300);
-}
-
-.step-body {
-  flex: 1;
+  background: var(--surface-soft);
 }
 </style>

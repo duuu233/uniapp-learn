@@ -15,498 +15,641 @@
 <template>
   <PageLayout :navbarShow="false">
     <scroll-view scroll-y class="page-scroll aurora-bg">
-      <view v-if="pageData" class="page-shell">
-        <view class="hero">
-          <view class="hero-glow" />
-          <view class="hero-kicker">需求清单 · 落地版</view>
-          <view class="hero-title">{{ pageData.heroTitle }}</view>
-          <view class="hero-subtitle">{{ pageData.heroSubtitle }}</view>
-          <view class="hero-footer">
-            <text class="hero-version">{{ pageData.versionText }}</text>
-            <view class="hero-button" hover-class="hero-button--hover" @click="openRoute(SCENARIO_ROUTES.deviceHub, true)">
-              <text>查看设备中心</text>
-              <text class="hero-button-arrow">→</text>
+      <view class="page-shell">
+        <view class="hero app-card-elevated">
+          <view class="hero-kicker">微信小程序投屏</view>
+          <view class="hero-title">拍照、选图、选设备、确认投屏</view>
+          <view class="hero-subtitle">
+            当前版本围绕微信小程序落地，首页直接承接拍照、相册、权限检查、设备切换和投屏确认。
+          </view>
+          <view class="hero-stats">
+            <view class="hero-stat">
+              <text class="hero-stat-value">{{ summaryCards[0].value }}</text>
+              <text class="hero-stat-label">{{ summaryCards[0].label }}</text>
+            </view>
+            <view class="hero-stat">
+              <text class="hero-stat-value">{{ summaryCards[1].value }}</text>
+              <text class="hero-stat-label">{{ summaryCards[1].label }}</text>
+            </view>
+            <view class="hero-stat">
+              <text class="hero-stat-value">{{ summaryCards[2].value }}</text>
+              <text class="hero-stat-label">{{ summaryCards[2].label }}</text>
             </view>
           </view>
         </view>
 
-        <view class="summary-grid">
-          <view v-for="(item, i) in pageData.summary" :key="item.label" class="summary-card" :style="{ '--i': i }">
-            <view class="summary-label">{{ item.label }}</view>
-            <view class="summary-value">{{ item.value }}</view>
-            <view class="summary-hint">{{ item.hint }}</view>
-            <view class="summary-spark" />
+        <view v-if="!hasLogin" class="login-tip app-card">
+          <view>
+            <view class="section-title">还未登录</view>
+            <view class="section-desc">投屏、相册删除和设备管理都依赖微信绑定手机号快捷登录。</view>
           </view>
+          <view class="link-button" @click="openRoute(SCENARIO_ROUTES.people, true)">去完成登录</view>
         </view>
 
-        <view class="section">
-          <view class="section-header">
+        <view class="section app-card">
+          <view class="section-head">
             <view>
-              <view class="app-section-kicker">Capabilities</view>
-              <view class="section-title">首页能力入口</view>
-              <view class="section-desc">按需求清单补齐静态页面和对应的接口占位。</view>
+              <view class="app-section-kicker">Current Device</view>
+              <view class="section-title">当前投屏设备</view>
+            </view>
+            <view class="link-button" @click="pickDevice">切换设备</view>
+          </view>
+          <view v-if="activeDevice" class="device-card">
+            <view class="device-top">
+              <view>
+                <view class="device-name">{{ activeDevice.name }}</view>
+                <view class="device-meta">{{ activeDevice.serialNumber }} · {{ activeDevice.location }}</view>
+              </view>
+              <view :class="['app-pill', formatDeviceStatusClass(activeDevice.status)]">
+                <view class="app-dot" />
+                <text>{{ formatDeviceStatus(activeDevice.status) }}</text>
+              </view>
+            </view>
+            <view class="device-stats">
+              <text>电量 {{ formatBattery(activeDevice.batteryLevel) }}</text>
+              <text>信号 {{ formatSignal(activeDevice.signalLevel) }}</text>
+              <text>存储 {{ formatStorage(activeDevice) }}</text>
             </view>
           </view>
-          <view class="action-list">
-            <view
-              v-for="item in pageData.capabilities"
-              :key="item.title"
-              class="action-card"
-              hover-class="action-card--hover"
-              @click="openRoute(item.url, item.isTab)"
-            >
-              <view class="action-bar" />
-              <view class="action-body">
-                <view class="action-top">
-                  <view class="action-title">{{ item.title }}</view>
-                  <view class="app-pill is-info">{{ item.badge }}</view>
-                </view>
-                <view class="action-subtitle">{{ item.subtitle }}</view>
-              </view>
-              <text class="action-chevron">›</text>
-            </view>
+          <view v-else class="empty-card">
+            <view class="empty-title">还没有可用设备</view>
+            <view class="empty-desc">先去绑定设备，或在“我的设备”里把设备设为当前投屏设备。</view>
           </view>
         </view>
 
-        <view class="section">
-          <view class="section-header">
+        <view class="action-grid">
+          <view class="action-card app-card-soft" hover-class="action-card--hover" @click="pickFromCamera">
+            <view class="action-icon">拍</view>
+            <view class="action-title">拍照</view>
+            <view class="action-desc">直接调用相机拍摄</view>
+          </view>
+          <view class="action-card app-card-soft" hover-class="action-card--hover" @click="pickFromAlbum">
+            <view class="action-icon">册</view>
+            <view class="action-title">相册</view>
+            <view class="action-desc">批量选择图片</view>
+          </view>
+          <view class="action-card app-card-soft" hover-class="action-card--hover" @click="openRoute(SCENARIO_ROUTES.devicePermissions)">
+            <view class="action-icon">权</view>
+            <view class="action-title">用户权限</view>
+            <view class="action-desc">定位、蓝牙、相机</view>
+          </view>
+          <view class="action-card app-card-soft" hover-class="action-card--hover" @click="openRoute(SCENARIO_ROUTES.bindDevice)">
+            <view class="action-icon">绑</view>
+            <view class="action-title">绑定设备</view>
+            <view class="action-desc">扫码或输入 SN</view>
+          </view>
+        </view>
+
+        <view class="section app-card">
+          <view class="section-head">
             <view>
-              <view class="app-section-kicker">Devices</view>
-              <view class="section-title">最近设备</view>
-              <view class="section-desc">这里预留为设备概览和后续状态刷新入口。</view>
+              <view class="app-section-kicker">Permission</view>
+              <view class="section-title">关键权限状态</view>
             </view>
+            <view class="link-button" @click="refreshPermissionState">刷新</view>
           </view>
-          <view class="device-list">
-            <view v-for="item in pageData.devices" :key="item.id" class="device-card" hover-class="device-card--hover">
-              <view class="device-top">
-                <view class="device-id">
-                  <view class="device-name">{{ item.name }}</view>
-                  <view class="device-sn">{{ item.serialNumber }}</view>
-                </view>
-                <view :class="['app-pill', statusClass(item.status)]">
-                  <view class="app-dot" />
-                  <text>{{ item.status }}</text>
-                </view>
-              </view>
-              <view class="device-meta">
-                <text class="device-meta-key">位置</text>
-                <text class="device-meta-value">{{ item.location }}</text>
-              </view>
-              <view class="device-stats">
-                <view class="device-stat">
-                  <view class="device-stat-label">信号</view>
-                  <view class="device-stat-value">{{ item.signal }}</view>
-                </view>
-                <view class="device-stat-divider" />
-                <view class="device-stat">
-                  <view class="device-stat-label">电量</view>
-                  <view class="device-stat-value">{{ item.battery }}</view>
-                </view>
-                <view class="device-stat-divider" />
-                <view class="device-stat">
-                  <view class="device-stat-label">最近</view>
-                  <view class="device-stat-value">{{ item.lastSeen }}</view>
-                </view>
-              </view>
-              <view class="tag-list">
-                <text v-for="tag in item.tags" :key="tag" class="tag">#{{ tag }}</text>
-              </view>
+          <view class="permission-list">
+            <view v-for="item in permissionCards" :key="item.label" class="permission-item">
+              <text class="permission-label">{{ item.label }}</text>
+              <text :class="['permission-value', item.className]">{{ item.value }}</text>
             </view>
           </view>
         </view>
 
-        <ApiDraftPanel :items="pageData.requestDrafts" />
+        <view class="section app-card">
+          <view class="section-head">
+            <view>
+              <view class="app-section-kicker">Cast Flow</view>
+              <view class="section-title">待投屏图片</view>
+              <view class="section-desc">流程为：选择图片 → 选择设备 → 预览尺寸 → 确认投屏。</view>
+            </view>
+            <view v-if="draftFiles.length" class="link-button danger" @click="clearDrafts">清空</view>
+          </view>
+          <view v-if="draftFiles.length" class="preview-grid">
+            <view v-for="item in draftFiles" :key="item.id" class="preview-card">
+              <image class="preview-image" :src="item.tempFilePath" mode="aspectFill" @click="previewDraft(item.id)" />
+              <view class="preview-meta">
+                <text class="ellipsis">{{ item.name }}</text>
+                <text>{{ item.width }} × {{ item.height }}</text>
+              </view>
+            </view>
+          </view>
+          <view v-else class="empty-card">
+            <view class="empty-title">还没有选择照片</view>
+            <view class="empty-desc">支持拍照或从相册批量选择，选中的图片会先在本页预览后再确认投屏。</view>
+          </view>
+          <view class="cast-footer">
+            <text class="cast-tip">
+              预处理后将以压缩图投屏，若设备空间不足会直接提示并保留失败记录。
+            </text>
+            <button class="primary-button" @click="castSelected">确认投屏</button>
+          </view>
+        </view>
+
+        <view class="section app-card">
+          <view class="section-head">
+            <view>
+              <view class="app-section-kicker">Recent</view>
+              <view class="section-title">最近投屏记录</view>
+            </view>
+            <view class="link-button" @click="openRoute(SCENARIO_ROUTES.castCenter)">查看全部</view>
+          </view>
+          <view v-if="recentRecords.length" class="record-list">
+            <view v-for="item in recentRecords" :key="item.id" class="record-item">
+              <image class="record-cover" :src="item.photoPath || '/static/placeholder.png'" mode="aspectFill" />
+              <view class="record-body">
+                <view class="record-top">
+                  <view class="record-title">{{ item.photoName }}</view>
+                  <view :class="['app-pill', item.status === 'success' ? 'is-online' : 'is-offline']">
+                    <text>{{ item.status === 'success' ? '成功' : '失败' }}</text>
+                  </view>
+                </view>
+                <view class="record-desc">{{ item.deviceName }} · {{ formatDateLabel(item.createdAt) }}</view>
+                <view class="record-desc">{{ item.message }}</view>
+              </view>
+            </view>
+          </view>
+          <view v-else class="empty-card">
+            <view class="empty-title">暂无投屏记录</view>
+            <view class="empty-desc">完成第一次投屏后，成功和失败记录都会展示在这里。</view>
+          </view>
+        </view>
       </view>
     </scroll-view>
   </PageLayout>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
-import { onLoad } from '@dcloudio/uni-app'
-import ApiDraftPanel from '@/components/scenario/ApiDraftPanel.vue'
-import { SCENARIO_ROUTES, getDashboardPageData, type DashboardPageData } from '@/service/scenario'
+import { computed, reactive, ref } from 'vue'
+import { onShow } from '@dcloudio/uni-app'
+import { useScenarioStore, useUserStore } from '@/store'
+import {
+  SCENARIO_ROUTES,
+  formatBattery,
+  formatDateLabel,
+  formatDeviceStatus,
+  formatDeviceStatusClass,
+  formatSignal,
+  formatStorage,
+  getAccessibleDevices,
+  getCurrentScenarioUserId,
+  getMyCastRecords,
+  getMyPhotos,
+  pickScenarioImages,
+  readMiniProgramAuthSetting,
+} from '@/service/scenario'
+import type { DraftPhotoInput, PermissionState } from '@/service/scenario'
 
-const pageData = ref<DashboardPageData | null>(null)
+const scenarioStore = useScenarioStore()
+const userStore = useUserStore()
 
-const openRoute = (url: string, isTab = false) => {
+const draftFiles = ref<DraftPhotoInput[]>([])
+const permissionState = reactive<Record<string, PermissionState>>({
+  location: 'pending',
+  camera: 'pending',
+  phone: 'pending',
+  bluetooth: 'pending',
+})
+
+const userId = computed(() => getCurrentScenarioUserId(userStore.userInfo.userid))
+const hasLogin = computed(() => !!userStore.isLogined)
+const accessibleDevices = computed(() => getAccessibleDevices(scenarioStore.devices, userId.value))
+const activeDevice = computed(() => {
+  const current = accessibleDevices.value.find((item) => item.id === scenarioStore.currentDeviceId)
+  return current || accessibleDevices.value[0] || null
+})
+const myPhotos = computed(() => getMyPhotos(scenarioStore.photos, userId.value))
+const myRecords = computed(() => getMyCastRecords(scenarioStore.castRecords, userId.value))
+const recentRecords = computed(() => myRecords.value.slice(0, 3))
+
+const summaryCards = computed(() => [
+  { label: '我的设备', value: `${accessibleDevices.value.length}` },
+  { label: '我的相册', value: `${myPhotos.value.length}` },
+  { label: '投屏记录', value: `${myRecords.value.length}` },
+])
+
+const permissionCards = computed(() => [
+  buildPermissionCard('定位权限', permissionState.location),
+  buildPermissionCard('相机权限', permissionState.camera),
+  buildPermissionCard('蓝牙状态', permissionState.bluetooth),
+  buildPermissionCard('手机号登录', permissionState.phone),
+])
+
+function buildPermissionCard(label: string, state: PermissionState) {
+  if (state === 'granted') {
+    return { label, value: '已就绪', className: 'is-ready' }
+  }
+  if (state === 'denied') {
+    return { label, value: '已拒绝', className: 'is-danger' }
+  }
+  if (state === 'unsupported') {
+    return { label, value: '不可用', className: 'is-muted' }
+  }
+  return { label, value: '待触发', className: 'is-pending' }
+}
+
+function openRoute(url: string, isTab = false) {
   if (isTab) {
     uni.switchTab({ url })
     return
   }
-
   uni.navigateTo({ url })
 }
 
-const statusClass = (status: string) => {
-  if (status === '在线') return 'is-online'
-  if (status === '待激活') return 'is-pending'
-  return 'is-offline'
+async function refreshPermissionState() {
+  const setting = await readMiniProgramAuthSetting()
+  permissionState.location = setting.authSetting['scope.userLocation'] === true ? 'granted' : setting.authSetting['scope.userLocation'] === false ? 'denied' : 'pending'
+  permissionState.camera = setting.authSetting['scope.camera'] === true ? 'granted' : setting.authSetting['scope.camera'] === false ? 'denied' : 'pending'
+  permissionState.phone = hasLogin.value ? 'granted' : 'pending'
+
+  await new Promise<void>((resolve) => {
+    uni.openBluetoothAdapter({
+      success: () => {
+        permissionState.bluetooth = 'granted'
+        uni.closeBluetoothAdapter({ complete: () => resolve() })
+      },
+      fail: () => {
+        permissionState.bluetooth = 'pending'
+        resolve()
+      },
+    })
+  })
 }
 
-onLoad(async () => {
-  pageData.value = await getDashboardPageData()
+async function appendDrafts(source: 'camera' | 'album') {
+  try {
+    const count = source === 'album' ? 9 : 1
+    const files = await pickScenarioImages(source, count)
+    draftFiles.value = [...draftFiles.value, ...files].slice(0, 9)
+    if (source === 'camera') permissionState.camera = 'granted'
+  } catch {
+    uni.showToast({ title: '未选择图片', icon: 'none' })
+  }
+}
+
+function pickFromCamera() {
+  appendDrafts('camera')
+}
+
+function pickFromAlbum() {
+  appendDrafts('album')
+}
+
+function clearDrafts() {
+  draftFiles.value = []
+}
+
+function previewDraft(photoId: string) {
+  const urls = draftFiles.value.map((item) => item.tempFilePath)
+  const current = draftFiles.value.find((item) => item.id === photoId)?.tempFilePath || urls[0]
+  uni.previewImage({ urls, current })
+}
+
+function pickDevice() {
+  if (!accessibleDevices.value.length) {
+    uni.showToast({ title: '请先绑定设备', icon: 'none' })
+    return
+  }
+
+  uni.showActionSheet({
+    itemList: accessibleDevices.value.map((item) => `${item.name} · ${item.location}`),
+    success: ({ tapIndex }) => {
+      const target = accessibleDevices.value[tapIndex]
+      if (!target) return
+      scenarioStore.setCurrentDevice(target.id)
+      uni.showToast({ title: `已切换到 ${target.name}`, icon: 'none' })
+    },
+  })
+}
+
+async function castSelected() {
+  if (!hasLogin.value) {
+    uni.showModal({
+      title: '需要登录',
+      content: '投屏前请先完成微信绑定手机号快捷登录。',
+      confirmText: '去登录',
+      success: ({ confirm }) => {
+        if (confirm) openRoute(SCENARIO_ROUTES.people, true)
+      },
+    })
+    return
+  }
+
+  if (!activeDevice.value) {
+    uni.showToast({ title: '请先选择设备', icon: 'none' })
+    return
+  }
+
+  const result = await scenarioStore.castDraftPhotosToDevice(activeDevice.value.id, draftFiles.value)
+  if (!result.success && result.storageFull) {
+    uni.showModal({
+      title: '设备内存已满',
+      content: '可以先去“我的相册”删除已上传照片，或联系设备所有者清理设备存储。',
+      confirmText: '我的相册',
+      cancelText: '知道了',
+      success: ({ confirm }) => {
+        if (confirm) {
+          openRoute(SCENARIO_ROUTES.albumCenter)
+        }
+      },
+    })
+    return
+  }
+
+  if (!result.success) {
+    uni.showToast({ title: result.message, icon: 'none' })
+    return
+  }
+
+  draftFiles.value = []
+  uni.showToast({ title: result.message, icon: 'success' })
+}
+
+onShow(() => {
+  scenarioStore.bootstrap()
+  refreshPermissionState()
 })
 </script>
 
 <style scoped lang="scss">
-.page-scroll {
-  /* aurora-bg utility from global stylesheet handles the background */
-}
-
-.page-shell {
-  gap: 28rpx;
-}
-
-/* === Hero === */
 .hero {
-  position: relative;
-  padding: 42rpx 36rpx 34rpx;
-  border: 1rpx solid rgba(255, 255, 255, 0.08);
-  border-radius: var(--r-xl);
+  padding: 36rpx 32rpx;
   background: var(--brand-grad-deep);
   color: var(--ink-on-brand);
-  box-shadow: var(--brand-glow);
-  overflow: hidden;
-  animation: aurora-rise 0.5s ease both;
-}
-
-.hero-glow {
-  position: absolute;
-  top: -110rpx;
-  right: -80rpx;
-  width: 320rpx;
-  height: 320rpx;
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(255, 255, 255, 0.16) 0%, rgba(255, 255, 255, 0) 72%);
-  pointer-events: none;
 }
 
 .hero-kicker {
-  display: inline-block;
-  padding: 6rpx 18rpx;
+  display: inline-flex;
+  padding: 8rpx 18rpx;
   border-radius: var(--r-pill);
-  background: rgba(255, 255, 255, 0.1);
-  border: 1rpx solid rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.12);
   font-size: 11px;
-  letter-spacing: 1.4rpx;
   font-weight: 700;
 }
 
 .hero-title {
-  margin-top: 22rpx;
-  font-size: 25px;
+  margin-top: 20rpx;
+  font-size: 22px;
   font-weight: 800;
-  line-height: 1.25;
-  letter-spacing: -0.4rpx;
+  line-height: 1.35;
 }
 
 .hero-subtitle {
-  margin-top: 14rpx;
+  margin-top: 12rpx;
   font-size: 13px;
   line-height: 1.7;
-  color: rgba(255, 255, 255, 0.78);
-  max-width: 92%;
+  color: rgba(255, 255, 255, 0.82);
 }
 
-.hero-footer {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 20rpx;
-  margin-top: 36rpx;
-  font-size: 12px;
-}
-
-.hero-version {
-  color: rgba(255, 255, 255, 0.7);
-  letter-spacing: 0.4rpx;
-}
-
-.hero-button {
-  display: inline-flex;
-  align-items: center;
-  gap: 10rpx;
-  padding: 16rpx 24rpx;
-  border-radius: var(--r-pill);
-  background: rgba(255, 255, 255, 0.96);
-  color: var(--brand-700);
-  font-weight: 700;
-  font-size: 13px;
-  box-shadow: 0 10rpx 24rpx rgba(15, 23, 42, 0.2);
-  transition: transform 0.18s ease, box-shadow 0.18s ease;
-}
-
-.hero-button--hover {
-  transform: translateY(-2rpx);
-  box-shadow: 0 16rpx 28rpx rgba(15, 23, 42, 0.18);
-}
-
-.hero-button-arrow {
-  font-size: 14px;
-  font-weight: 700;
-}
-
-/* === Summary === */
-.summary-grid {
+.hero-stats {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 20rpx;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16rpx;
+  margin-top: 28rpx;
 }
 
-.summary-card {
-  position: relative;
-  padding: 28rpx 26rpx;
-  border: 1rpx solid var(--hairline);
+.hero-stat {
+  padding: 18rpx;
   border-radius: var(--r-md);
-  background: var(--surface);
-  box-shadow: var(--shadow-sm);
-  overflow: hidden;
-  animation: aurora-rise 0.5s ease both;
-  animation-delay: calc(60ms * var(--i, 0));
+  background: rgba(255, 255, 255, 0.08);
 }
 
-.summary-card::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 6rpx;
-  height: 72rpx;
-  background: var(--brand-grad);
-  border-radius: 0 4rpx 4rpx 0;
-}
-
-.summary-label {
-  font-size: 12px;
-  color: var(--ink-400);
-  letter-spacing: 0.4rpx;
-}
-
-.summary-value {
-  margin-top: 14rpx;
-  font-size: 30px;
+.hero-stat-value {
+  display: block;
+  font-size: 22px;
   font-weight: 800;
-  color: var(--ink-900);
-  letter-spacing: -0.6rpx;
-  font-feature-settings: 'tnum';
 }
 
-.summary-hint {
+.hero-stat-label {
+  display: block;
   margin-top: 8rpx;
   font-size: 12px;
-  color: var(--ink-400);
-  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.72);
 }
 
-.summary-spark {
-  position: absolute;
-  right: 18rpx;
-  bottom: 18rpx;
-  width: 80rpx;
-  height: 32rpx;
-  border-radius: var(--r-xs);
-  background: linear-gradient(135deg, rgba(49, 95, 203, 0.1), rgba(49, 95, 203, 0));
-}
-
-/* === Section === */
+.login-tip,
 .section {
-  padding: 32rpx 28rpx 28rpx;
-  border: 1rpx solid var(--hairline);
-  border-radius: var(--r-lg);
-  background: var(--surface);
-  box-shadow: var(--shadow-sm);
+  padding: 28rpx 24rpx;
 }
 
-.section-header {
-  margin-bottom: 22rpx;
+.section-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16rpx;
+  margin-bottom: 20rpx;
 }
 
 .section-title {
-  margin-top: 10rpx;
-  font-size: 18px;
+  font-size: 17px;
   font-weight: 800;
   color: var(--ink-900);
-  letter-spacing: -0.3rpx;
 }
 
 .section-desc {
-  margin-top: 6rpx;
+  margin-top: 8rpx;
   font-size: 12px;
-  line-height: 1.65;
+  line-height: 1.7;
   color: var(--ink-400);
 }
 
-/* === Action cards === */
-.action-list,
-.device-list {
+.link-button {
+  padding: 10rpx 18rpx;
+  border-radius: var(--r-pill);
+  background: var(--brand-50);
+  color: var(--brand-700);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.link-button.danger {
+  background: var(--status-offline-bg);
+  color: var(--status-offline-fg);
+}
+
+.device-card {
+  padding: 22rpx;
+  border-radius: var(--r-md);
+  background: linear-gradient(180deg, #fbfcfe 0%, #f4f7fb 100%);
+  border: 1rpx solid rgba(49, 95, 203, 0.08);
+}
+
+.device-top,
+.record-top {
   display: flex;
-  flex-direction: column;
+  justify-content: space-between;
   gap: 16rpx;
 }
 
-.action-card {
-  position: relative;
-  display: flex;
-  align-items: center;
-  gap: 18rpx;
-  padding: 22rpx 22rpx 22rpx 26rpx;
-  border-radius: var(--r-md);
-  background: linear-gradient(180deg, #fbfcfe 0%, #f4f7fb 100%);
-  border: 1rpx solid var(--hairline);
-  transition: transform 0.18s ease, box-shadow 0.18s ease;
-}
-
-.action-card--hover {
-  transform: translateY(-2rpx);
-  box-shadow: var(--shadow-sm);
-}
-
-.action-bar {
-  width: 6rpx;
-  align-self: stretch;
-  border-radius: var(--r-pill);
-  background: var(--brand-grad);
-  flex-shrink: 0;
-}
-
-.action-body {
-  flex: 1;
-  min-width: 0;
-}
-
-.action-top {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12rpx;
-}
-
+.device-name,
+.record-title,
 .action-title {
   font-size: 15px;
   font-weight: 700;
   color: var(--ink-900);
 }
 
-.action-subtitle {
+.device-meta,
+.record-desc {
   margin-top: 8rpx;
   font-size: 12px;
   line-height: 1.6;
   color: var(--ink-400);
 }
 
-.action-chevron {
-  font-size: 28rpx;
-  color: var(--ink-300);
-  font-weight: 600;
-  line-height: 1;
+.device-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16rpx;
+  margin-top: 18rpx;
+  font-size: 12px;
+  color: var(--ink-500);
 }
 
-/* === Device cards === */
-.device-card {
-  padding: 26rpx 26rpx 22rpx;
-  border-radius: var(--r-md);
-  background: var(--surface);
-  border: 1rpx solid var(--hairline);
-  box-shadow: var(--shadow-xs);
-  transition: box-shadow 0.18s ease, transform 0.18s ease;
+.action-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16rpx;
 }
 
-.device-card--hover {
-  box-shadow: var(--shadow-sm);
+.action-card {
+  padding: 24rpx;
+}
+
+.action-card--hover {
   transform: translateY(-2rpx);
 }
 
-.device-top {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 12rpx;
+.action-icon {
+  width: 64rpx;
+  height: 64rpx;
+  line-height: 64rpx;
+  border-radius: 20rpx;
+  background: var(--brand-50);
+  color: var(--brand-700);
+  text-align: center;
+  font-size: 15px;
+  font-weight: 800;
 }
 
-.device-id {
+.action-desc,
+.cast-tip,
+.empty-desc,
+.preview-meta,
+.permission-label {
+  margin-top: 10rpx;
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--ink-400);
+}
+
+.permission-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16rpx;
+}
+
+.permission-item {
+  padding: 20rpx;
+  border-radius: var(--r-md);
+  background: var(--surface-soft);
+}
+
+.permission-value {
+  display: block;
+  margin-top: 8rpx;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.permission-value.is-ready {
+  color: var(--status-online-fg);
+}
+
+.permission-value.is-danger {
+  color: var(--status-offline-fg);
+}
+
+.permission-value.is-pending {
+  color: var(--status-pending-fg);
+}
+
+.permission-value.is-muted {
+  color: var(--ink-300);
+}
+
+.preview-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16rpx;
+}
+
+.preview-card {
+  overflow: hidden;
+  border-radius: var(--r-md);
+  background: var(--surface-soft);
+}
+
+.preview-image {
+  width: 100%;
+  height: 220rpx;
+  display: block;
+}
+
+.preview-meta {
+  padding: 16rpx;
+  margin-top: 0;
+}
+
+.cast-footer {
+  margin-top: 20rpx;
+}
+
+.primary-button {
+  margin-top: 16rpx;
+  border: none;
+  border-radius: 18px;
+  background: var(--brand-grad);
+  color: #fff;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.record-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+}
+
+.record-item {
+  display: flex;
+  gap: 16rpx;
+  padding: 18rpx;
+  border-radius: var(--r-md);
+  background: var(--surface-soft);
+}
+
+.record-cover {
+  width: 120rpx;
+  height: 120rpx;
+  flex-shrink: 0;
+  border-radius: 20rpx;
+}
+
+.record-body {
+  flex: 1;
   min-width: 0;
 }
 
-.device-name {
-  font-size: 15px;
+.empty-card {
+  padding: 28rpx 20rpx;
+  border-radius: var(--r-md);
+  background: var(--surface-soft);
+}
+
+.empty-title {
+  font-size: 14px;
   font-weight: 700;
   color: var(--ink-900);
-}
-
-.device-sn {
-  margin-top: 6rpx;
-  font-size: 11px;
-  color: var(--ink-300);
-  letter-spacing: 0.4rpx;
-  font-feature-settings: 'tnum';
-}
-
-.device-meta {
-  display: flex;
-  align-items: center;
-  gap: 10rpx;
-  margin-top: 18rpx;
-  font-size: 12px;
-}
-
-.device-meta-key {
-  color: var(--ink-300);
-}
-
-.device-meta-value {
-  color: var(--ink-700);
-  font-weight: 500;
-}
-
-.device-stats {
-  display: flex;
-  align-items: stretch;
-  margin-top: 20rpx;
-  padding: 16rpx 0;
-  border-top: 1rpx solid var(--hairline);
-  border-bottom: 1rpx solid var(--hairline);
-}
-
-.device-stat {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4rpx;
-}
-
-.device-stat-label {
-  font-size: 11px;
-  color: var(--ink-300);
-  letter-spacing: 0.5rpx;
-}
-
-.device-stat-value {
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--ink-900);
-  font-feature-settings: 'tnum';
-}
-
-.device-stat-divider {
-  width: 1rpx;
-  background: var(--hairline);
-}
-
-.tag-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10rpx;
-  margin-top: 18rpx;
-}
-
-.tag {
-  padding: 6rpx 14rpx;
-  border-radius: var(--r-pill);
-  background: linear-gradient(180deg, #f4f7fb 0%, #edf3ff 100%);
-  font-size: 11px;
-  color: var(--brand-700);
-  font-weight: 600;
 }
 </style>

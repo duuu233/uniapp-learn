@@ -15,181 +15,252 @@
 <template>
   <PageLayout :navbarShow="false">
     <scroll-view scroll-y class="page-scroll aurora-bg">
-      <view v-if="pageData" class="page-shell">
-        <view class="profile-card">
-          <view class="profile-glow" />
-          <view class="profile-row">
-            <view class="avatar">
-              <text class="avatar-text">{{ pageData.profile.name.slice(0, 1) }}</text>
-              <view class="avatar-ring" />
+      <view class="page-shell">
+        <view class="profile-card app-card-elevated">
+          <template v-if="hasLogin">
+            <view class="profile-top">
+              <image class="avatar" :src="userStore.userInfo.avatar || '/static/default-avatar.png'" mode="aspectFill" />
+              <view class="profile-main">
+                <view class="profile-name">{{ userStore.userInfo.realname || '微信用户' }}</view>
+                <view class="profile-meta">{{ userStore.userInfo.phone || '138****1024' }}</view>
+                <view class="profile-meta">ID：{{ userStore.userInfo.userid }}</view>
+              </view>
             </view>
-            <view class="profile-body">
-              <view class="profile-name">{{ pageData.profile.name }}</view>
-              <view class="profile-role">{{ pageData.profile.role }} · {{ pageData.profile.company }}</view>
+            <view class="profile-actions">
+              <view class="pill-button" @click="syncProfile">同步微信头像昵称</view>
+              <view class="pill-button" @click="openRoute(SCENARIO_ROUTES.profileInfo)">编辑资料</view>
             </view>
-          </view>
-          <view class="profile-slogan">"{{ pageData.profile.slogan }}"</view>
+          </template>
+          <template v-else>
+            <view class="profile-name">微信绑定手机号快捷登录</view>
+            <view class="profile-desc">当前小程序不提供注册页和退出登录页，登录即绑定为本地唯一操作者身份。</view>
+            <button class="primary-button" open-type="getPhoneNumber" @getphonenumber="handlePhoneLogin">
+              微信绑定手机号快捷登录
+            </button>
+          </template>
         </view>
 
-        <view v-for="group in pageData.menuGroups" :key="group.title" class="section">
-          <view class="section-head">
-            <view class="section-title">{{ group.title }}</view>
+        <view class="summary-grid">
+          <view v-for="item in summaryCards" :key="item.label" class="summary-card app-card">
+            <view class="summary-label">{{ item.label }}</view>
+            <view class="summary-value">{{ item.value }}</view>
+            <view class="summary-hint">{{ item.hint }}</view>
           </view>
+        </view>
+
+        <view class="section app-card">
+          <view class="section-title">核心入口</view>
           <view class="menu-list">
-            <view
-              v-for="item in group.items"
-              :key="item.title"
-              class="menu-item"
-              hover-class="menu-item--hover"
-              @click="openRoute(item.url, item.isTab)"
-            >
+            <view v-for="item in primaryMenus" :key="item.title" class="menu-item" hover-class="menu-item--hover" @click="openRoute(item.url, item.isTab)">
               <view class="menu-main">
                 <view class="menu-title">{{ item.title }}</view>
-                <view class="menu-subtitle">{{ item.subtitle }}</view>
+                <view class="menu-desc">{{ item.desc }}</view>
               </view>
-              <view class="menu-right">
-                <view v-if="item.badge" class="app-pill is-info">{{ item.badge }}</view>
-                <text class="menu-chevron">›</text>
-              </view>
+              <text class="menu-arrow">›</text>
             </view>
           </view>
         </view>
 
-        <ApiDraftPanel :items="pageData.requestDrafts" />
+        <view class="section app-card">
+          <view class="section-title">更多功能</view>
+          <view class="menu-list">
+            <view v-for="item in secondaryMenus" :key="item.title" class="menu-item" hover-class="menu-item--hover" @click="openRoute(item.url, item.isTab)">
+              <view class="menu-main">
+                <view class="menu-title">{{ item.title }}</view>
+                <view class="menu-desc">{{ item.desc }}</view>
+              </view>
+              <text class="menu-arrow">›</text>
+            </view>
+          </view>
+        </view>
       </view>
     </scroll-view>
   </PageLayout>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
-import { onLoad } from '@dcloudio/uni-app'
-import ApiDraftPanel from '@/components/scenario/ApiDraftPanel.vue'
-import { getMyCenterPageData, type MyCenterPageData } from '@/service/scenario'
+import { computed, ref } from 'vue'
+import { onLoad, onShow } from '@dcloudio/uni-app'
+import { useScenarioStore, useUserStore } from '@/store'
+import { handleWechatPhoneQuickLogin, syncWechatProfileToStore } from '@/service/scenario/account'
+import {
+  SCENARIO_ROUTES,
+  getAccessibleDevices,
+  getCurrentScenarioUserId,
+  getMyCastRecords,
+  getMyPhotos,
+} from '@/service/scenario'
 
-const pageData = ref<MyCenterPageData | null>(null)
+const scenarioStore = useScenarioStore()
+const userStore = useUserStore()
+const redirectUrl = ref('')
 
-const openRoute = (url: string, isTab = false) => {
+const userId = computed(() => getCurrentScenarioUserId(userStore.userInfo.userid))
+const hasLogin = computed(() => !!userStore.isLogined)
+const myDevices = computed(() => getAccessibleDevices(scenarioStore.devices, userId.value))
+const myPhotos = computed(() => getMyPhotos(scenarioStore.photos, userId.value))
+const myRecords = computed(() => getMyCastRecords(scenarioStore.castRecords, userId.value))
+
+const summaryCards = computed(() => [
+  { label: '我的设备', value: `${myDevices.value.length}`, hint: '含所有者和使用者设备' },
+  { label: '我的相册', value: `${myPhotos.value.length}`, hint: '仅记录成功投屏照片' },
+  { label: '投屏记录', value: `${myRecords.value.length}`, hint: '成功和失败都会保留' },
+])
+
+const primaryMenus = [
+  { title: '我的相册', desc: '多选删除、再次投屏', url: SCENARIO_ROUTES.albumCenter },
+  { title: '我的设备', desc: '名称、权限、轮播和一键清空', url: SCENARIO_ROUTES.deviceHub, isTab: true },
+  { title: '投屏管理', desc: '查看成功/失败记录并重投', url: SCENARIO_ROUTES.castCenter },
+]
+
+const secondaryMenus = [
+  { title: '个人信息', desc: '昵称、头像、手机号和用户 ID', url: SCENARIO_ROUTES.profileInfo },
+  { title: '设备定位', desc: '查看当前设备定位和轨迹', url: SCENARIO_ROUTES.miniLocation },
+  { title: '操作指南', desc: '按设备类型查看帮助文档', url: SCENARIO_ROUTES.guideCenter },
+  { title: '设置', desc: '关于我们、联系方式、隐私政策、用户协议', url: SCENARIO_ROUTES.settingsCenter },
+]
+
+function openRoute(url: string, isTab = false) {
   if (isTab) {
     uni.switchTab({ url })
     return
   }
-
   uni.navigateTo({ url })
 }
 
-onLoad(async () => {
-  pageData.value = await getMyCenterPageData()
+function navigateAfterLogin() {
+  if (!redirectUrl.value) return
+  const target = decodeURIComponent(redirectUrl.value)
+  redirectUrl.value = ''
+  if (target === SCENARIO_ROUTES.home || target === SCENARIO_ROUTES.deviceHub || target === SCENARIO_ROUTES.people) {
+    uni.switchTab({ url: target })
+    return
+  }
+  uni.redirectTo({ url: target })
+}
+
+function handlePhoneLogin(event: Record<string, any>) {
+  const result = handleWechatPhoneQuickLogin(event?.detail)
+  uni.showToast({ title: result.message, icon: result.success ? 'success' : 'none' })
+  if (result.success) {
+    navigateAfterLogin()
+  }
+}
+
+async function syncProfile() {
+  try {
+    await syncWechatProfileToStore()
+    uni.showToast({ title: '微信头像昵称已同步', icon: 'success' })
+  } catch {
+    uni.showToast({ title: '你取消了微信资料授权', icon: 'none' })
+  }
+}
+
+onLoad((options) => {
+  redirectUrl.value = typeof options?.redirect === 'string' ? options.redirect : ''
+})
+
+onShow(() => {
+  scenarioStore.bootstrap()
 })
 </script>
 
 <style scoped lang="scss">
-.page-shell {
-  gap: 28rpx;
+.profile-card,
+.section {
+  padding: 28rpx 24rpx;
 }
 
-/* === Profile === */
 .profile-card {
-  position: relative;
-  padding: 40rpx 36rpx 30rpx;
-  border: 1rpx solid rgba(255, 255, 255, 0.08);
-  border-radius: var(--r-xl);
   background: var(--brand-grad-deep);
   color: var(--ink-on-brand);
-  box-shadow: var(--brand-glow);
-  overflow: hidden;
-  animation: aurora-rise 0.5s ease both;
 }
 
-.profile-glow {
-  position: absolute;
-  top: -110rpx;
-  right: -90rpx;
-  width: 320rpx;
-  height: 320rpx;
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(255, 255, 255, 0.14) 0%, rgba(255, 255, 255, 0) 72%);
-  pointer-events: none;
-}
-
-.profile-row {
+.profile-top {
   display: flex;
+  gap: 20rpx;
   align-items: center;
-  gap: 24rpx;
-  position: relative;
 }
 
 .avatar {
-  position: relative;
   width: 112rpx;
   height: 112rpx;
-  border-radius: var(--r-md);
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.26), rgba(255, 255, 255, 0.08));
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  border-radius: 28rpx;
   flex-shrink: 0;
-}
-
-.avatar-text {
-  font-size: 38rpx;
-  font-weight: 800;
-  color: #fff;
-  letter-spacing: 0.5rpx;
-}
-
-.avatar-ring {
-  position: absolute;
-  inset: -4rpx;
-  border-radius: calc(var(--r-md) + 4rpx);
-  border: 1rpx solid rgba(255, 255, 255, 0.28);
-  pointer-events: none;
+  background: rgba(255, 255, 255, 0.12);
 }
 
 .profile-name {
   font-size: 21px;
   font-weight: 800;
-  letter-spacing: -0.3rpx;
 }
 
-.profile-role {
-  margin-top: 8rpx;
+.profile-meta,
+.profile-desc {
+  margin-top: 10rpx;
   font-size: 12px;
+  line-height: 1.6;
   color: rgba(255, 255, 255, 0.76);
-  letter-spacing: 0.3rpx;
 }
 
-.profile-slogan {
-  margin-top: 28rpx;
-  padding-top: 24rpx;
-  border-top: 1rpx solid rgba(255, 255, 255, 0.14);
-  font-size: 13px;
-  line-height: 1.7;
-  color: rgba(255, 255, 255, 0.88);
-  font-style: italic;
+.profile-actions {
+  display: flex;
+  gap: 16rpx;
+  margin-top: 24rpx;
 }
 
-/* === Section === */
-.section {
-  padding: 28rpx 24rpx;
-  border: 1rpx solid var(--hairline);
-  border-radius: var(--r-lg);
-  background: var(--surface);
-  box-shadow: var(--shadow-sm);
+.pill-button {
+  padding: 10rpx 18rpx;
+  border-radius: var(--r-pill);
+  background: rgba(255, 255, 255, 0.12);
+  font-size: 12px;
+  font-weight: 700;
 }
 
-.section-head {
-  padding: 4rpx 8rpx 18rpx;
+.primary-button {
+  margin-top: 24rpx;
+  border: none;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.96);
+  color: var(--brand-700);
+  font-size: 15px;
+  font-weight: 700;
 }
 
-.section-title {
+.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16rpx;
+}
+
+.summary-card {
+  padding: 22rpx 18rpx;
+}
+
+.summary-label,
+.summary-hint,
+.menu-desc {
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--ink-400);
+}
+
+.summary-value,
+.section-title,
+.menu-title {
   font-size: 16px;
   font-weight: 800;
   color: var(--ink-900);
-  letter-spacing: -0.2rpx;
 }
 
-/* === Menu === */
+.summary-value {
+  margin-top: 10rpx;
+}
+
+.section-title {
+  margin-bottom: 12rpx;
+}
+
 .menu-list {
   display: flex;
   flex-direction: column;
@@ -200,10 +271,7 @@ onLoad(async () => {
   align-items: center;
   justify-content: space-between;
   gap: 16rpx;
-  padding: 22rpx 16rpx;
-  border-radius: var(--r-sm);
-  transition: background 0.18s ease, transform 0.18s ease;
-  position: relative;
+  padding: 20rpx 0;
 }
 
 .menu-item + .menu-item {
@@ -211,8 +279,7 @@ onLoad(async () => {
 }
 
 .menu-item--hover {
-  background: var(--surface-muted);
-  transform: translateX(2rpx);
+  opacity: 0.82;
 }
 
 .menu-main {
@@ -220,30 +287,12 @@ onLoad(async () => {
   min-width: 0;
 }
 
-.menu-title {
-  font-size: 15px;
-  font-weight: 600;
-  color: var(--ink-900);
-}
-
-.menu-subtitle {
+.menu-desc {
   margin-top: 8rpx;
-  font-size: 12px;
-  line-height: 1.6;
-  color: var(--ink-400);
 }
 
-.menu-right {
-  display: flex;
-  align-items: center;
-  gap: 14rpx;
-  flex-shrink: 0;
-}
-
-.menu-chevron {
-  font-size: 32rpx;
+.menu-arrow {
+  font-size: 20px;
   color: var(--ink-300);
-  font-weight: 600;
-  line-height: 1;
 }
 </style>
